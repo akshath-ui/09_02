@@ -1,0 +1,2193 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart Fishing Harbour – Kerala 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f8ff;--surface:#ffffff;--surface2:#e8f4fd;--border:#c9dff0;
+  --text:#0d2d4a;--muted:#4a7a9b;--accent:#0066cc;--accent2:#00a86b;
+  --card:#ffffff;--shadow:0 2px 12px rgba(0,102,204,0.12);
+  --nav-bg:#0066cc;--nav-text:#ffffff;--tab-active:#ffffff;--tab-text:rgba(255,255,255,0.75);
+  --price-up:#00a86b;--price-down:#e63946;--badge:#ff6b35;
+}
+[data-theme="dark"]{
+  --bg:#020b18;--surface:#051c30;--surface2:#072540;--border:#0e3a5c;
+  --text:#c8e6ff;--muted:#5b9fd4;--accent:#4db8ff;--accent2:#00ffb3;
+  --card:#071e33;--shadow:0 2px 16px rgba(0,0,0,0.7);
+  --nav-bg:#020e1d;--nav-text:#4db8ff;--tab-active:#4db8ff;--tab-text:rgba(77,184,255,0.6);
+  --price-up:#00ffb3;--price-down:#ff4d6d;--badge:#ff9f1c;
+}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .4s,color .4s}
+a{color:var(--accent);text-decoration:none}
+button{cursor:pointer;font-family:inherit}
+
+/* ROLE SELECTION SCREEN */
+#role-screen{position:fixed;inset:0;z-index:999;background:linear-gradient(160deg,#003d99 0%,#0066cc 40%,#00a86b 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;transition:opacity .4s}
+#role-screen.hidden{opacity:0;pointer-events:none}
+.role-screen-logo{font-size:52px;margin-bottom:8px}
+.role-screen-title{color:#fff;font-size:26px;font-weight:800;margin-bottom:4px;text-align:center}
+.role-screen-sub{color:rgba(255,255,255,.78);font-size:14px;margin-bottom:28px;text-align:center}
+.role-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:440px}
+.role-card{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);border-radius:16px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .22s;color:#fff;backdrop-filter:blur(6px)}
+.role-card:hover{background:rgba(255,255,255,.26);transform:translateY(-3px)}
+.role-card.selected{background:rgba(255,255,255,.95);color:#0066cc;box-shadow:0 8px 28px rgba(0,0,0,.22)}
+.role-card .rc-icon{font-size:32px;margin-bottom:8px}
+.role-card .rc-label{font-weight:700;font-size:13px;line-height:1.3}
+.role-enter-btn{margin-top:22px;background:#fff;color:#0066cc;border:none;border-radius:30px;padding:14px 40px;font-size:16px;font-weight:800;box-shadow:0 4px 18px rgba(0,0,0,.22);transition:transform .2s}
+.role-enter-btn:hover{transform:scale(1.04)}
+
+/* ANIMATED BG */
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.45}
+
+/* LAYOUT */
+#app{position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+@media(min-width:768px){#app{max-width:100%;flex-direction:row;flex-wrap:wrap}}
+
+/* TOP BAR */
+#topbar{background:var(--nav-bg);color:var(--nav-text);display:flex;align-items:center;justify-content:space-between;padding:10px 14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+#topbar .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px}
+#topbar .logo span{font-size:22px}
+#topbar .actions{display:flex;align-items:center;gap:8px}
+.icon-btn{background:none;border:none;color:var(--nav-text);font-size:20px;padding:4px;border-radius:6px;transition:opacity .2s}
+.icon-btn:hover{opacity:.7}
+#lang-btn{font-size:12px;font-weight:700;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:20px;padding:4px 10px}
+/* role switcher pill in topbar */
+#role-pill{font-size:11px;font-weight:700;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:20px;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
+#role-pill .rp-arrow{font-size:9px;opacity:.8}
+
+/* ROLE SWITCHER DROPDOWN */
+#role-switcher-panel{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.25);width:260px;display:none;overflow:hidden}
+#role-switcher-panel.open{display:block}
+.rs-header{background:linear-gradient(135deg,#0066cc,#00a86b);color:#fff;padding:12px 16px;font-size:13px;font-weight:700}
+.rs-item{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;font-size:13px;font-weight:600;transition:background .2s;color:var(--text)}
+.rs-item:hover{background:var(--surface2)}
+.rs-item.active{color:var(--accent)}
+.rs-item .rs-icon{font-size:20px}
+
+/* BOTTOM NAV */
+#bottom-nav{background:var(--nav-bg);display:flex;position:sticky;bottom:0;z-index:100;box-shadow:0 -2px 10px rgba(0,0,0,.25)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 2px 6px;border:none;background:none;color:var(--tab-text);font-size:10px;gap:2px;transition:color .2s}
+.nav-item.active{color:var(--tab-active)}
+.nav-item .ni{font-size:22px}
+
+/* MAIN */
+#main{flex:1;overflow-y:auto;padding:12px;padding-bottom:4px}
+
+/* ROLE TRANSITION */
+#main{transition:opacity .25s}
+#main.switching{opacity:0}
+
+/* TABS */
+.tab{display:none;animation:fadeIn .3s ease}
+.tab.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* SECTION TITLE */
+.sec-title{font-size:17px;font-weight:700;color:var(--text);margin:14px 0 8px;display:flex;align-items:center;gap:7px}
+.sec-title span{font-size:20px}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 12px;box-shadow:var(--shadow);text-align:center}
+.kpi-card .kv{font-size:26px;font-weight:800;color:var(--accent)}
+.kpi-card .kl{font-size:11px;color:var(--muted);margin-top:3px}
+.kpi-card .ki{font-size:24px;margin-bottom:4px}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:12px}
+.card-row{display:flex;gap:10px;flex-wrap:wrap}
+.card-half{flex:1;min-width:140px}
+
+/* HERO BANNER */
+.hero{background:linear-gradient(135deg,#0066cc,#0099ff);border-radius:16px;padding:18px;color:#fff;margin-bottom:14px;position:relative;overflow:hidden}
+.hero h2{font-size:20px;font-weight:700;margin-bottom:4px}
+.hero p{font-size:13px;opacity:.88}
+.hero-wave{position:absolute;bottom:-10px;right:-10px;font-size:60px;opacity:.15}
+
+/* DEAL / FISH CARDS */
+.deals-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.deal-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:transform .2s,box-shadow .2s}
+.deal-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,102,204,.2)}
+.deal-card img{width:100%;height:90px;object-fit:cover}
+.deal-card .dc-body{padding:8px 10px 10px}
+.deal-card .dc-name{font-weight:700;font-size:13px}
+.deal-card .dc-price{color:var(--price-up);font-weight:700;font-size:15px}
+.deal-card .dc-buyer{font-size:11px;color:var(--muted);margin-top:2px}
+.deal-card .dc-badge{background:var(--badge);color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:2px 7px;display:inline-block;margin-top:4px}
+/* freshness */
+.fresh-tag{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;margin-top:3px}
+.fresh-vf{background:#d4f7e8;color:#00754a}
+.fresh-fr{background:#d9f0ff;color:#005fa3}
+.fresh-ok{background:#fff4d4;color:#8a5c00}
+.fresh-old{background:#ffe4e4;color:#c00}
+
+/* PRICE TABLE */
+.price-table{width:100%;border-collapse:collapse;font-size:13px}
+.price-table th{background:var(--surface2);color:var(--muted);font-weight:600;padding:8px 10px;text-align:left;border-bottom:2px solid var(--border)}
+.price-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.price-table tr:last-child td{border-bottom:none}
+.fish-icon{font-size:18px;margin-right:6px}
+.up{color:var(--price-up);font-weight:700}
+.down{color:var(--price-down);font-weight:700}
+.badge-tag{background:var(--surface2);color:var(--accent);border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600}
+
+/* DEMAND BARS */
+.demand-item{margin-bottom:10px}
+.demand-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;font-weight:600}
+.demand-bar{height:10px;background:var(--surface2);border-radius:10px;overflow:hidden}
+.demand-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .8s ease}
+
+/* BUYER CARDS */
+.buyer-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:var(--shadow);margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:box-shadow .2s}
+.buyer-card:hover{box-shadow:0 4px 16px rgba(0,102,204,.22)}
+.buyer-avatar{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid var(--accent)}
+.buyer-info{flex:1}
+.buyer-name{font-weight:700;font-size:14px}
+.buyer-type{font-size:11px;color:var(--muted);margin-bottom:4px}
+.buyer-fish{font-size:12px;color:var(--text);margin-bottom:6px}
+.stars{color:#f5a623;font-size:14px}
+.star-count{font-size:11px;color:var(--muted);margin-left:4px}
+.verified{background:#00a86b;color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:2px 7px;margin-left:6px}
+
+/* HARBOUR CARDS */
+.harbour-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:14px;cursor:pointer;transition:transform .2s}
+.harbour-card:hover{transform:translateY(-2px)}
+.harbour-card img{width:100%;height:130px;object-fit:cover}
+.harbour-body{padding:12px}
+.harbour-name{font-weight:700;font-size:15px;margin-bottom:2px}
+.harbour-loc{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.harbour-stats{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
+.hstat{background:var(--surface2);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--accent)}
+
+/* STORAGE CARDS */
+.storage-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:10px}
+.storage-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.storage-name{font-weight:700;font-size:14px}
+.status-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px}
+.status-ok{background:#00a86b}
+.status-warn{background:#f5a623}
+.status-off{background:#e63946}
+.capacity-bar{height:12px;background:var(--surface2);border-radius:10px;overflow:hidden;margin:6px 0}
+.capacity-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,#0066cc,#00a86b)}
+.storage-meta{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+
+/* MAINTENANCE BOARD */
+.maint-board{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.maint-col{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+.maint-col-header{font-weight:700;font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.maint-item{background:var(--surface2);border-radius:10px;padding:9px 10px;margin-bottom:7px;font-size:12px;cursor:pointer;transition:box-shadow .2s}
+.maint-item:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.maint-item .mi-title{font-weight:700;font-size:12px}
+.maint-item .mi-meta{color:var(--muted);font-size:11px;margin-top:2px}
+.priority-crit{border-left:3px solid #e63946}
+.priority-high{border-left:3px solid #f5a623}
+.priority-med{border-left:3px solid #3b82f6}
+.priority-done{border-left:3px solid #00a86b;opacity:.7}
+
+/* AUCTION LIVE */
+.auction-live-card{background:var(--card);border:2px solid var(--accent);border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px;position:relative}
+.auction-live-badge{position:absolute;top:12px;right:12px;background:#e63946;color:#fff;font-size:10px;font-weight:800;border-radius:20px;padding:3px 9px;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.auction-fish-name{font-size:18px;font-weight:800;margin-bottom:4px}
+.auction-lot-meta{font-size:12px;color:var(--muted);margin-bottom:12px}
+.bid-list{list-style:none;margin-bottom:10px}
+.bid-row{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:10px;font-size:13px;margin-bottom:4px;background:var(--surface2)}
+.bid-row.top-bid{background:linear-gradient(90deg,rgba(0,168,107,.15),rgba(0,102,204,.1));font-weight:700;font-size:14px}
+.bid-amount{color:var(--price-up);font-weight:800}
+.countdown{font-size:28px;font-weight:800;color:var(--price-down);text-align:center;margin:8px 0}
+
+/* ALERT SYSTEM */
+.alert-item{border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.alert-emergency{background:#ffe4e4;border-left:4px solid #e63946}
+.alert-weather{background:#fff3d4;border-left:4px solid #f5a623}
+.alert-quality{background:#e4f4ff;border-left:4px solid #0066cc}
+.alert-infra{background:#ffe8d6;border-left:4px solid #ff6b35}
+.alert-announce{background:#e4fef0;border-left:4px solid #00a86b}
+[data-theme="dark"] .alert-emergency{background:rgba(230,57,70,.15)}
+[data-theme="dark"] .alert-weather{background:rgba(245,166,35,.12)}
+[data-theme="dark"] .alert-quality{background:rgba(0,102,204,.15)}
+[data-theme="dark"] .alert-infra{background:rgba(255,107,53,.12)}
+[data-theme="dark"] .alert-announce{background:rgba(0,168,107,.12)}
+.alert-icon{font-size:22px;line-height:1}
+.alert-body{flex:1}
+.alert-title{font-weight:700;font-size:13px}
+.alert-msg{font-size:12px;color:var(--muted);margin-top:2px}
+.alert-time{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* NOTICE / CALENDAR */
+.notice-item{background:var(--card);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:box-shadow .2s;box-shadow:var(--shadow)}
+.notice-item:hover{box-shadow:0 4px 16px rgba(0,102,204,.22)}
+.notice-date{font-size:11px;color:var(--muted);margin-bottom:3px}
+.notice-title{font-weight:700;font-size:14px}
+.notice-preview{font-size:12px;color:var(--muted);margin-top:4px}
+.notice-urgent{border-left-color:#e63946}
+.notice-info{border-left-color:#00a86b}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.cal-header{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:4px 0}
+.cal-header.sun-header{color:#e63946}
+.cal-day{text-align:center;padding:6px 2px;border-radius:8px;font-size:12px;cursor:pointer;transition:background .2s;position:relative}
+.cal-day:hover{background:var(--surface2)}
+.cal-day.today{background:var(--accent);color:#fff;font-weight:700}
+.cal-day.is-sunday{color:#e63946;font-weight:700}
+.cal-day.is-holiday{background:rgba(230,57,70,0.13);color:#e63946;font-weight:700}
+.cal-day.has-major{font-weight:700;color:#7c3aed}
+.cal-day.has-minor{font-weight:700;color:#2563eb}
+.cal-day.has-major::after{content:'●';position:absolute;bottom:1px;left:50%;transform:translateX(-50%);font-size:7px;color:#7c3aed}
+.cal-day.has-minor::after{content:'●';position:absolute;bottom:1px;left:50%;transform:translateX(-50%);font-size:7px;color:#2563eb}
+.cal-day.today::after{color:#fff}
+.cal-day.empty{pointer-events:none;opacity:0}
+.cal-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11px}
+.cal-leg-item{display:flex;align-items:center;gap:4px}
+.cal-leg-dot{width:9px;height:9px;border-radius:50%}
+
+/* NOTIFICATION BELL */
+.notif-btn-wrap{position:relative}
+.notif-badge{position:absolute;top:-3px;right:-3px;background:#e63946;color:#fff;font-size:9px;font-weight:800;border-radius:50%;width:15px;height:15px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+#notif-panel{position:fixed;top:60px;right:10px;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.25);padding:0;width:300px;display:none;overflow:hidden}
+#notif-panel.open{display:block}
+#notif-panel-header{background:linear-gradient(135deg,#0066cc,#00a86b);color:#fff;padding:12px 14px;font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+#notif-list{max-height:340px;overflow-y:auto}
+.notif-item{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;cursor:pointer;transition:background .2s}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:var(--surface2)}
+.notif-item.unread{background:rgba(0,102,204,0.06)}
+.notif-icon{font-size:22px;line-height:1;flex-shrink:0;margin-top:2px}
+.notif-body{flex:1}
+.notif-sender{font-weight:700;font-size:12px}
+.notif-msg{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+.notif-time{font-size:10px;color:var(--muted);margin-top:3px}
+.notif-unread-dot{width:7px;height:7px;border-radius:50%;background:#0066cc;flex-shrink:0;margin-top:6px}
+#notif-footer{padding:10px 14px;text-align:center;font-size:12px;color:var(--accent);cursor:pointer;border-top:1px solid var(--border)}
+
+/* PHOTO UPLOAD */
+.photo-upload-area{border:2px dashed var(--border);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s;margin:10px 0;background:var(--surface2)}
+.photo-upload-area:hover{border-color:var(--accent)}
+.photo-upload-area input[type=file]{display:none}
+.photo-preview-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.photo-preview-grid img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
+.review-photo{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--border);margin-top:4px;cursor:pointer}
+
+/* COMPARE/CHART */
+.chart-container{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:12px}
+.chart-container canvas{max-height:260px}
+.compare-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.filter-chip{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:20px;padding:5px 14px;font-size:12px;cursor:pointer;transition:all .2s}
+.filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;transform:translateY(40px);transition:transform .3s}
+.overlay.open .modal{transform:translateY(0)}
+@media(min-width:520px){.overlay{align-items:center}.modal{border-radius:20px;max-width:460px}}
+.modal-close{float:right;background:var(--surface2);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;color:var(--text);display:flex;align-items:center;justify-content:center}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:12px}
+.modal img{width:100%;border-radius:12px;margin-bottom:12px;max-height:180px;object-fit:cover}
+
+/* REVIEW */
+.review-item{border-bottom:1px solid var(--border);padding:10px 0}
+.review-item:last-child{border-bottom:none}
+.review-author{font-weight:700;font-size:13px}
+.review-text{font-size:12px;color:var(--muted);margin-top:3px}
+.report-btn{background:none;border:1px solid var(--price-down);color:var(--price-down);border-radius:20px;padding:3px 10px;font-size:11px;margin-top:6px}
+.rating-input{display:flex;gap:6px;margin:10px 0}
+.rating-input span{font-size:26px;cursor:pointer;opacity:.4;transition:opacity .2s}
+.rating-input span.sel{opacity:1}
+
+/* SETTINGS */
+.settings-section{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow)}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s}
+.settings-row:last-child{border-bottom:none}
+.settings-row:hover{background:var(--surface2)}
+.settings-row-left{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:500}
+.settings-row-left .si{font-size:20px}
+.toggle-switch{width:44px;height:24px;background:var(--border);border-radius:12px;position:relative;cursor:pointer;transition:background .3s}
+.toggle-switch.on{background:var(--accent)}
+.toggle-switch::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .3s}
+.toggle-switch.on::after{transform:translateX(20px)}
+
+/* AI CHAT */
+#ai-fab{position:fixed;bottom:80px;right:16px;z-index:150;width:54px;height:54px;background:linear-gradient(135deg,#0066cc,#00a86b);border:none;border-radius:50%;box-shadow:0 4px 16px rgba(0,102,204,.4);display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;transition:transform .2s}
+#ai-fab:hover{transform:scale(1.1)}
+#ai-panel{position:fixed;bottom:80px;right:16px;z-index:149;width:300px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:0 8px 32px rgba(0,0,0,.25);display:none;flex-direction:column;overflow:hidden;max-height:400px}
+#ai-panel.open{display:flex}
+#ai-header{background:linear-gradient(135deg,#0066cc,#00a86b);color:#fff;padding:12px 14px;font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+#ai-messages{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.ai-msg{max-width:85%;padding:8px 11px;border-radius:12px;font-size:13px;line-height:1.5}
+.ai-msg.bot{background:var(--surface2);align-self:flex-start;border-radius:4px 12px 12px 12px}
+.ai-msg.user{background:var(--accent);color:#fff;align-self:flex-end;border-radius:12px 4px 12px 12px}
+#ai-input-row{display:flex;gap:6px;padding:8px;border-top:1px solid var(--border)}
+#ai-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:7px 12px;font-size:13px;color:var(--text);outline:none}
+#ai-send{background:var(--accent);border:none;border-radius:50%;width:32px;height:32px;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center}
+
+/* LANG PANEL */
+#lang-panel{position:fixed;top:60px;right:10px;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:12px;width:230px;display:none}
+#lang-panel.open{display:block}
+.lang-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px}
+.lang-opt{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:12px;cursor:pointer;text-align:center;transition:all .2s}
+.lang-opt:hover,.lang-opt.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* MENU DRAWER */
+#menu-drawer{position:fixed;top:0;right:-280px;width:280px;height:100vh;background:var(--surface);z-index:500;box-shadow:-4px 0 20px rgba(0,0,0,.3);transition:right .3s;overflow-y:auto;padding:20px 0}
+#menu-drawer.open{right:0}
+#menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:499;display:none}
+#menu-overlay.open{display:block}
+.menu-header{padding:16px 20px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.menu-profile{display:flex;align-items:center;gap:12px}
+.menu-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0066cc,#00a86b);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:700}
+.menu-name{font-weight:700;font-size:15px}
+.menu-role{font-size:12px;color:var(--muted)}
+.menu-item{display:flex;align-items:center;gap:12px;padding:13px 20px;font-size:14px;cursor:pointer;transition:background .2s;color:var(--text)}
+.menu-item:hover{background:var(--surface2)}
+.menu-item .mi{font-size:20px}
+.menu-divider{height:1px;background:var(--border);margin:8px 0}
+
+/* ORDER/PURCHASE CARDS */
+.order-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;box-shadow:var(--shadow);margin-bottom:10px;display:flex;gap:10px;align-items:flex-start}
+.order-status{display:inline-block;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700}
+.os-pending{background:#fff3d4;color:#8a5c00}
+.os-processing{background:#d9f0ff;color:#005fa3}
+.os-delivered{background:#d4f7e8;color:#00754a}
+.os-cancelled{background:#ffe4e4;color:#c00}
+
+/* UTILITY */
+.flex-row{display:flex;align-items:center;gap:8px}
+.spacer{flex:1}
+.text-muted{color:var(--muted);font-size:12px}
+.text-sm{font-size:13px}
+.mt-8{margin-top:8px}
+.mb-4{margin-bottom:4px}
+.pill{background:var(--surface2);color:var(--accent);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
+.fish-img{width:36px;height:36px;border-radius:8px;object-fit:cover;background:var(--surface2)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<!-- ROLE SELECTION SCREEN -->
+<div id="role-screen">
+  <div class="role-screen-logo">🐟</div>
+  <div class="role-screen-title">Smart Harbour</div>
+  <div class="role-screen-sub">Kerala Fisheries 2026 · Select your role to continue</div>
+  <div class="role-cards">
+    <div class="role-card" data-role="fisherman" onclick="selectRole('fisherman',this)">
+      <div class="rc-icon">🚤</div>
+      <div class="rc-label">Fisherman</div>
+    </div>
+    <div class="role-card" data-role="customer" onclick="selectRole('customer',this)">
+      <div class="rc-icon">🐟</div>
+      <div class="rc-label">Fish Customer</div>
+    </div>
+    <div class="role-card" data-role="maintenance" onclick="selectRole('maintenance',this)">
+      <div class="rc-icon">🏗️</div>
+      <div class="rc-label">Harbour Maintenance</div>
+    </div>
+    <div class="role-card" data-role="auction" onclick="selectRole('auction',this)">
+      <div class="rc-icon">🔨</div>
+      <div class="rc-label">Auction Owner</div>
+    </div>
+    <div class="role-card" data-role="admin" onclick="selectRole('admin',this)">
+      <div class="rc-icon">🏛️</div>
+      <div class="rc-label">Harbour Authority</div>
+    </div>
+    <div class="role-card" data-role="vendor" onclick="selectRole('vendor',this)">
+      <div class="rc-icon">🚚</div>
+      <div class="rc-label">Fish Vendor / Trader</div>
+    </div>
+  </div>
+  <button class="role-enter-btn" id="role-enter-btn" onclick="enterDashboard()" style="display:none">Enter Dashboard →</button>
+</div>
+
+<!-- MENU OVERLAY -->
+<div id="menu-overlay" onclick="closeMenu()"></div>
+
+<!-- MENU DRAWER -->
+<div id="menu-drawer">
+  <div class="menu-header">
+    <div class="menu-profile">
+      <div class="menu-avatar" id="menu-avatar-icon">R</div>
+      <div>
+        <div class="menu-name" id="menu-profile-name">Rajan Kumar</div>
+        <div class="menu-role" id="menu-profile-role">Fisherman · Munambam</div>
+      </div>
+    </div>
+  </div>
+  <div class="menu-item" onclick="openTab('settings');closeMenu()"><span class="mi">⚙️</span><span>Settings</span></div>
+  <div class="menu-item" onclick="closeMenu();showAlert('Profile editing coming soon!')"><span class="mi">👤</span><span>Edit Profile</span></div>
+  <div class="menu-item" onclick="closeMenu();toggleNotifPanel()"><span class="mi">🔔</span><span>Notifications</span></div>
+  <div class="menu-item" onclick="closeMenu();toggleLangPanel()"><span class="mi">🌐</span><span>Language</span></div>
+  <div class="menu-divider"></div>
+  <div class="menu-item" onclick="closeMenu();showRoleSwitcher()"><span class="mi">🔄</span><span>Switch Role</span></div>
+  <div class="menu-item" onclick="closeMenu();openFeedbackModal()"><span class="mi">💬</span><span>Feedback</span></div>
+  <div class="menu-item" onclick="closeMenu();showAlert('Calling Customer Care: 1800-425-1660')"><span class="mi">📞</span><span>Customer Care</span></div>
+  <div class="menu-divider"></div>
+  <div class="menu-item" style="color:var(--price-down)" onclick="closeMenu();showRoleScreen()"><span class="mi">🚪</span><span>Sign Out</span></div>
+</div>
+
+<!-- LANGUAGE PANEL -->
+<div id="lang-panel">
+  <div style="font-weight:700;font-size:13px">Select Language</div>
+  <div class="lang-grid" id="lang-grid"></div>
+</div>
+
+<!-- NOTIFICATION PANEL -->
+<div id="notif-panel">
+  <div id="notif-panel-header">
+    <span>🔔 Notifications</span>
+    <button onclick="closeNotifPanel()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer">✕</button>
+  </div>
+  <div id="notif-list"></div>
+  <div id="notif-footer" onclick="markAllRead()">✓ Mark all as read</div>
+</div>
+
+<!-- ROLE SWITCHER PANEL -->
+<div id="role-switcher-panel">
+  <div class="rs-header">🔄 Switch Role</div>
+  <div class="rs-item" data-role="fisherman" onclick="switchRoleTo('fisherman')"><span class="rs-icon">🚤</span>Fisherman</div>
+  <div class="rs-item" data-role="customer" onclick="switchRoleTo('customer')"><span class="rs-icon">🐟</span>Fish Customer</div>
+  <div class="rs-item" data-role="maintenance" onclick="switchRoleTo('maintenance')"><span class="rs-icon">🏗️</span>Harbour Maintenance</div>
+  <div class="rs-item" data-role="auction" onclick="switchRoleTo('auction')"><span class="rs-icon">🔨</span>Auction Owner</div>
+  <div class="rs-item" data-role="admin" onclick="switchRoleTo('admin')"><span class="rs-icon">🏛️</span>Harbour Authority</div>
+  <div class="rs-item" data-role="vendor" onclick="switchRoleTo('vendor')"><span class="rs-icon">🚚</span>Fish Vendor / Trader</div>
+</div>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="logo"><span>🐟</span><div><div style="font-size:14px;font-weight:800">Smart Harbour</div><div style="font-size:10px;opacity:.8">Kerala Fisheries 2026</div></div></div>
+  <div class="actions">
+    <div id="role-pill" onclick="showRoleSwitcher()"><span id="role-pill-icon">🚤</span><span id="role-pill-label">Fisherman</span><span class="rp-arrow">▼</span></div>
+    <div class="notif-btn-wrap">
+      <button class="icon-btn" onclick="toggleNotifPanel()" title="Notifications">🔔</button>
+      <span class="notif-badge" id="notif-badge" style="display:none">0</span>
+    </div>
+    <button id="lang-btn" class="icon-btn" onclick="toggleLangPanel()">🌐 EN</button>
+    <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+    <button class="icon-btn" onclick="openMenu()">☰</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main">
+
+  <!-- ======================== FISHERMAN TABS ======================== -->
+  <div class="tab active role-tab-fisherman" id="tab-home">
+    <div class="hero">
+      <h2>Good Morning, Rajan! 🌊</h2>
+      <p>Munambam Harbour · Today's market is active</p>
+      <div class="hero-wave">🌊</div>
+    </div>
+    <div class="sec-title"><span>🔥</span>Today's Best Deals</div>
+    <div class="deals-grid" id="deals-grid"></div>
+    <div class="sec-title"><span>📊</span>Top Sellers Today</div>
+    <div id="bestsellers-list"></div>
+    <div class="sec-title"><span>⚡</span>Quick Actions</div>
+    <div class="card-row">
+      <div class="card card-half" onclick="openTab('compare')" style="cursor:pointer;text-align:center"><div style="font-size:28px">📈</div><div style="font-weight:700;font-size:13px;margin-top:4px">Compare Prices</div></div>
+      <div class="card card-half" onclick="openTab('harbour')" style="cursor:pointer;text-align:center"><div style="font-size:28px">⚓</div><div style="font-weight:700;font-size:13px;margin-top:4px">Harbours</div></div>
+      <div class="card card-half" onclick="openTab('storage')" style="cursor:pointer;text-align:center"><div style="font-size:28px">🧊</div><div style="font-weight:700;font-size:13px;margin-top:4px">Ice & Storage</div></div>
+      <div class="card card-half" onclick="openTab('notice')" style="cursor:pointer;text-align:center"><div style="font-size:28px">📢</div><div style="font-weight:700;font-size:13px;margin-top:4px">Notices</div></div>
+    </div>
+  </div>
+
+  <div class="tab role-tab-fisherman" id="tab-price">
+    <div class="sec-title"><span>💹</span>Live Fish Price Board</div>
+    <div class="card" style="padding:8px 0">
+      <div style="display:flex;gap:8px;padding:0 12px 10px;flex-wrap:wrap">
+        <select id="harbour-select" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;color:var(--text);outline:none" onchange="renderPriceTable()">
+          <option value="munambam">Munambam Harbour</option>
+          <option value="cochin">Cochin Fisheries Harbour</option>
+          <option value="sakthikulangara">Sakthikulangara Harbour</option>
+          <option value="beypore">Beypore Harbour</option>
+          <option value="ponnani">Ponnani Harbour</option>
+        </select>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">🔴 Live</div>
+      </div>
+      <table class="price-table" id="price-table">
+        <thead><tr><th>Fish</th><th>Min ₹/kg</th><th>Max ₹/kg</th><th>Trend</th></tr></thead>
+        <tbody id="price-tbody"></tbody>
+      </table>
+    </div>
+    <div class="sec-title"><span>📋</span>Demand Dashboard</div>
+    <div class="card" id="demand-card"></div>
+  </div>
+
+  <div class="tab role-tab-fisherman" id="tab-buyers">
+    <div class="sec-title"><span>🧑‍💼</span>Buyer Listing</div>
+    <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <input id="buyer-search" placeholder="🔍 Search buyers..." style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--text);outline:none;min-width:140px" oninput="renderBuyers()"/>
+      <select style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--text);outline:none" id="buyer-filter" onchange="renderBuyers()">
+        <option value="all">All Types</option><option value="wholesale">Wholesale</option><option value="retail">Retail</option><option value="export">Export</option>
+      </select>
+    </div>
+    <div id="buyers-list"></div>
+  </div>
+
+  <div class="tab role-tab-fisherman" id="tab-harbour">
+    <div class="sec-title"><span>⚓</span>Kerala Harbours</div>
+    <div id="harbours-list"></div>
+  </div>
+
+  <div class="tab role-tab-fisherman" id="tab-compare">
+    <div class="sec-title"><span>📈</span>Price Comparison</div>
+    <div class="compare-filters" id="compare-filters"></div>
+    <div class="chart-container"><canvas id="compare-chart"></canvas></div>
+    <div class="sec-title"><span>⚓</span>Harbour Price Comparison</div>
+    <div class="chart-container"><canvas id="harbour-chart"></canvas></div>
+  </div>
+
+  <div class="tab role-tab-fisherman" id="tab-notice">
+    <div class="sec-title"><span>📢</span>Announcements</div>
+    <div id="notices-list"></div>
+    <div class="sec-title"><span>📅</span>Event Calendar</div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <button onclick="calPrev()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 10px;color:var(--text)">◀</button>
+        <span id="cal-month-label" style="font-weight:700;font-size:14px"></span>
+        <button onclick="calNext()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 10px;color:var(--text)">▶</button>
+      </div>
+      <div id="calendar-grid"></div>
+      <div class="cal-legend">
+        <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#e63946"></div><span style="color:var(--muted)">Sunday / Holiday</span></div>
+        <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#7c3aed"></div><span style="color:var(--muted)">Major Event</span></div>
+        <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#2563eb"></div><span style="color:var(--muted)">Minor Event</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab role-tab-fisherman" id="tab-storage">
+    <div class="sec-title"><span>🧊</span>Ice Plant &amp; Cold Storage Status</div>
+    <div id="storage-list"></div>
+  </div>
+
+  <!-- ======================== CUSTOMER TABS ======================== -->
+  <div class="tab role-tab-customer" id="tab-cust-home">
+    <div class="hero" style="background:linear-gradient(135deg,#00754a,#00a86b)">
+      <h2>Fresh Catch Today! 🐟</h2>
+      <p>Find the freshest fish at the best prices near you</p>
+      <div class="hero-wave">🐟</div>
+    </div>
+    <div style="margin-bottom:10px">
+      <input id="cust-search" placeholder="🔍 Search fish by name..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:10px 16px;font-size:13px;color:var(--text);outline:none" oninput="renderCustomerFish()"/>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px" id="budget-filters">
+      <div class="filter-chip active" onclick="setCustBudget('all',this)">All</div>
+      <div class="filter-chip" onclick="setCustBudget('budget',this)">Under ₹100/kg</div>
+      <div class="filter-chip" onclick="setCustBudget('mid',this)">₹100–₹300/kg</div>
+      <div class="filter-chip" onclick="setCustBudget('premium',this)">₹300+/kg</div>
+    </div>
+    <div class="sec-title"><span>🐟</span>Available Fish Today</div>
+    <div id="cust-fish-list"></div>
+    <div class="sec-title"><span>📢</span>Harbour Announcements</div>
+    <div id="cust-notices"></div>
+  </div>
+
+  <div class="tab role-tab-customer" id="tab-cust-sellers">
+    <div class="sec-title"><span>📍</span>Nearby Sellers</div>
+    <div id="cust-sellers-list"></div>
+  </div>
+
+  <div class="tab role-tab-customer" id="tab-cust-weather">
+    <div class="sec-title"><span>🌊</span>Weather &amp; Sea Conditions</div>
+    <div id="cust-weather-card"></div>
+  </div>
+
+  <!-- ======================== MAINTENANCE TABS ======================== -->
+  <div class="tab role-tab-maintenance" id="tab-maint-home">
+    <div class="hero" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">
+      <h2>Maintenance Dashboard 🏗️</h2>
+      <p>Munambam Harbour · 3 critical issues pending</p>
+      <div class="hero-wave">🔧</div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="ki">🔴</div><div class="kv" style="color:#e63946">3</div><div class="kl">Critical Issues</div></div>
+      <div class="kpi-card"><div class="ki">🟠</div><div class="kv" style="color:#f5a623">5</div><div class="kl">High Priority</div></div>
+      <div class="kpi-card"><div class="ki">🟡</div><div class="kv" style="color:#3b82f6">8</div><div class="kl">Medium Priority</div></div>
+      <div class="kpi-card"><div class="ki">✅</div><div class="kv" style="color:#00a86b">12</div><div class="kl">Completed Today</div></div>
+    </div>
+    <div class="sec-title"><span>🗂️</span>Maintenance Board</div>
+    <div id="maint-board"></div>
+    <div class="sec-title"><span>⚡</span>Quick Actions</div>
+    <div class="card-row">
+      <div class="card card-half" onclick="openTab('maint-report')" style="cursor:pointer;text-align:center"><div style="font-size:28px">📋</div><div style="font-weight:700;font-size:13px;margin-top:4px">Report Issue</div></div>
+      <div class="card card-half" onclick="openTab('maint-tasks')" style="cursor:pointer;text-align:center"><div style="font-size:28px">👷</div><div style="font-weight:700;font-size:13px;margin-top:4px">View Tasks</div></div>
+      <div class="card card-half" onclick="showAlert('Opening schedule...')" style="cursor:pointer;text-align:center"><div style="font-size:28px">📅</div><div style="font-weight:700;font-size:13px;margin-top:4px">Schedule</div></div>
+      <div class="card card-half" onclick="showAlert('Assigning workers...')" style="cursor:pointer;text-align:center"><div style="font-size:28px">👥</div><div style="font-weight:700;font-size:13px;margin-top:4px">Workers</div></div>
+    </div>
+  </div>
+
+  <div class="tab role-tab-maintenance" id="tab-maint-report">
+    <div class="sec-title"><span>📋</span>Report an Issue</div>
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:10px">Issue Category</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px" id="issue-cat-grid"></div>
+      <div style="font-weight:700;margin-bottom:6px">Priority Level</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div class="filter-chip active" id="pri-critical" onclick="setIssuePriority('critical')">🔴 Critical</div>
+        <div class="filter-chip" id="pri-high" onclick="setIssuePriority('high')">🟠 High</div>
+        <div class="filter-chip" id="pri-medium" onclick="setIssuePriority('medium')">🟡 Medium</div>
+      </div>
+      <textarea id="issue-desc" placeholder="Describe the issue in detail..." style="width:100%;height:80px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13px;color:var(--text);resize:none;outline:none;margin-bottom:10px"></textarea>
+      <label class="photo-upload-area" onclick="document.getElementById('issue-photo-input').click()">
+        <input type="file" id="issue-photo-input" accept="image/*" multiple onchange="previewPhotos(this,'issue-photo-preview')"/>
+        <div style="font-size:22px;margin-bottom:4px">📷</div>
+        <div style="font-size:13px;font-weight:600;color:var(--accent)">Add Photos</div>
+        <div style="font-size:11px;color:var(--muted)">Tap to upload photos of the issue</div>
+      </label>
+      <div class="photo-preview-grid" id="issue-photo-preview"></div>
+      <button onclick="submitIssueReport()" style="width:100%;background:var(--price-down);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;margin-top:10px">🚨 Submit Issue Report</button>
+    </div>
+  </div>
+
+  <div class="tab role-tab-maintenance" id="tab-maint-tasks">
+    <div class="sec-title"><span>👷</span>All Maintenance Tasks</div>
+    <div id="all-maint-tasks"></div>
+  </div>
+
+  <!-- ======================== AUCTION TABS ======================== -->
+  <div class="tab role-tab-auction" id="tab-auct-home">
+    <div class="hero" style="background:linear-gradient(135deg,#92400e,#d97706)">
+      <h2>Auction Dashboard 🔨</h2>
+      <p>Munambam Harbour · 2 auctions live now</p>
+      <div class="hero-wave">🔨</div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="ki">🔴</div><div class="kv" style="color:#e63946">2</div><div class="kl">Live Auctions</div></div>
+      <div class="kpi-card"><div class="ki">📦</div><div class="kv">14</div><div class="kl">Lots Available</div></div>
+      <div class="kpi-card"><div class="ki">👥</div><div class="kv">38</div><div class="kl">Active Buyers</div></div>
+      <div class="kpi-card"><div class="ki">💰</div><div class="kv">₹2.4L</div><div class="kl">Today's Value</div></div>
+    </div>
+    <div class="sec-title"><span>🔴</span>Live Auctions</div>
+    <div id="live-auctions"></div>
+    <div class="sec-title"><span>⚡</span>Quick Actions</div>
+    <div class="card-row">
+      <div class="card card-half" onclick="showAlert('Opening create auction form...')" style="cursor:pointer;text-align:center"><div style="font-size:28px">➕</div><div style="font-weight:700;font-size:13px;margin-top:4px">Create Auction</div></div>
+      <div class="card card-half" onclick="openTab('auct-lots')" style="cursor:pointer;text-align:center"><div style="font-size:28px">📦</div><div style="font-weight:700;font-size:13px;margin-top:4px">Manage Lots</div></div>
+      <div class="card card-half" onclick="openTab('auct-history')" style="cursor:pointer;text-align:center"><div style="font-size:28px">📜</div><div style="font-weight:700;font-size:13px;margin-top:4px">Transactions</div></div>
+      <div class="card card-half" onclick="showAlert('Viewing pending settlements...')" style="cursor:pointer;text-align:center"><div style="font-size:28px">💳</div><div style="font-weight:700;font-size:13px;margin-top:4px">Settlements</div></div>
+    </div>
+  </div>
+
+  <div class="tab role-tab-auction" id="tab-auct-lots">
+    <div class="sec-title"><span>📦</span>Fish Lots</div>
+    <div id="auct-lots-list"></div>
+  </div>
+
+  <div class="tab role-tab-auction" id="tab-auct-history">
+    <div class="sec-title"><span>📜</span>Completed Auctions</div>
+    <div id="auct-history-list"></div>
+  </div>
+
+  <!-- ======================== ADMIN TABS ======================== -->
+  <div class="tab role-tab-admin" id="tab-admin-home">
+    <div class="hero" style="background:linear-gradient(135deg,#1e3a5f,#2563eb)">
+      <h2>Command Centre 🏛️</h2>
+      <p>Munambam Harbour · All systems operational</p>
+      <div class="hero-wave">🏛️</div>
+    </div>
+    <div class="sec-title"><span>📊</span>Real-time KPIs</div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="ki">⚓</div><div class="kv">142</div><div class="kl">Boats in Harbour</div></div>
+      <div class="kpi-card"><div class="ki">🌊</div><div class="kv">89</div><div class="kl">Boats at Sea</div></div>
+      <div class="kpi-card"><div class="ki">🐟</div><div class="kv">18.4T</div><div class="kl">Fish Landed Today</div></div>
+      <div class="kpi-card"><div class="ki">💰</div><div class="kv">₹12.6L</div><div class="kl">Auction Value</div></div>
+      <div class="kpi-card"><div class="ki">👷</div><div class="kv">312</div><div class="kl">Fishermen</div></div>
+      <div class="kpi-card"><div class="ki">🚚</div><div class="kv">74</div><div class="kl">Vendors Active</div></div>
+      <div class="kpi-card"><div class="ki">🔧</div><div class="kv" style="color:#e63946">3</div><div class="kl">Active Issues</div></div>
+      <div class="kpi-card"><div class="ki">📊</div><div class="kv">78%</div><div class="kl">Harbour Capacity</div></div>
+    </div>
+    <div class="sec-title"><span>🚨</span>Active Alerts</div>
+    <div id="admin-alerts"></div>
+    <div class="sec-title"><span>⚡</span>Admin Actions</div>
+    <div class="card-row">
+      <div class="card card-half" onclick="showAlert('Opening User Management...')" style="cursor:pointer;text-align:center"><div style="font-size:28px">👥</div><div style="font-weight:700;font-size:13px;margin-top:4px">Manage Users</div></div>
+      <div class="card card-half" onclick="openTab('admin-auctions')" style="cursor:pointer;text-align:center"><div style="font-size:28px">🔨</div><div style="font-weight:700;font-size:13px;margin-top:4px">Auctions</div></div>
+      <div class="card card-half" onclick="openTab('admin-alerts')" style="cursor:pointer;text-align:center"><div style="font-size:28px">🚨</div><div style="font-weight:700;font-size:13px;margin-top:4px">Alerts</div></div>
+      <div class="card card-half" onclick="showAlert('Opening reports dashboard...')" style="cursor:pointer;text-align:center"><div style="font-size:28px">📊</div><div style="font-weight:700;font-size:13px;margin-top:4px">Reports</div></div>
+    </div>
+  </div>
+
+  <div class="tab role-tab-admin" id="tab-admin-alerts">
+    <div class="sec-title"><span>🚨</span>Alert System</div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-weight:700;margin-bottom:10px">Create New Alert</div>
+      <select id="alert-type-sel" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);outline:none;margin-bottom:8px">
+        <option value="emergency">🚨 Emergency</option>
+        <option value="weather">⚠️ Weather Warning</option>
+        <option value="quality">🐟 Fish Quality Warning</option>
+        <option value="infra">🔧 Infrastructure Issue</option>
+        <option value="announce">📢 Harbour Announcement</option>
+      </select>
+      <textarea id="alert-msg-input" placeholder="Alert message..." style="width:100%;height:70px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px;font-size:13px;color:var(--text);resize:none;outline:none;margin-bottom:8px"></textarea>
+      <button onclick="broadcastAlert()" style="width:100%;background:var(--price-down);color:#fff;border:none;border-radius:12px;padding:11px;font-size:14px;font-weight:700">📢 Broadcast Alert</button>
+    </div>
+    <div class="sec-title"><span>📋</span>Recent Alerts</div>
+    <div id="admin-all-alerts"></div>
+  </div>
+
+  <div class="tab role-tab-admin" id="tab-admin-auctions">
+    <div class="sec-title"><span>🔨</span>Auction Overview</div>
+    <div id="admin-auction-overview"></div>
+  </div>
+
+  <!-- ======================== VENDOR TABS ======================== -->
+  <div class="tab role-tab-vendor" id="tab-vend-home">
+    <div class="hero" style="background:linear-gradient(135deg,#065f46,#059669)">
+      <h2>Vendor Dashboard 🚚</h2>
+      <p>Active Trader · Kerala Fish Markets</p>
+      <div class="hero-wave">🚚</div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="ki">📦</div><div class="kv">8</div><div class="kl">Active Orders</div></div>
+      <div class="kpi-card"><div class="ki">🚚</div><div class="kv">3</div><div class="kl">In Transit</div></div>
+      <div class="kpi-card"><div class="ki">💰</div><div class="kv">₹48K</div><div class="kl">Today's Purchases</div></div>
+      <div class="kpi-card"><div class="ki">📈</div><div class="kv">↑12%</div><div class="kl">vs Yesterday</div></div>
+    </div>
+    <div class="sec-title"><span>🐟</span>Available Wholesale Fish</div>
+    <div id="vend-fish-list"></div>
+    <div class="sec-title"><span>⚡</span>Quick Actions</div>
+    <div class="card-row">
+      <div class="card card-half" onclick="openTab('vend-auctions')" style="cursor:pointer;text-align:center"><div style="font-size:28px">🔨</div><div style="font-weight:700;font-size:13px;margin-top:4px">View Auctions</div></div>
+      <div class="card card-half" onclick="openTab('vend-orders')" style="cursor:pointer;text-align:center"><div style="font-size:28px">📦</div><div style="font-weight:700;font-size:13px;margin-top:4px">My Orders</div></div>
+      <div class="card card-half" onclick="openTab('vend-prices')" style="cursor:pointer;text-align:center"><div style="font-size:28px">📈</div><div style="font-weight:700;font-size:13px;margin-top:4px">Price Trends</div></div>
+      <div class="card card-half" onclick="showAlert('Opening supplier directory...')" style="cursor:pointer;text-align:center"><div style="font-size:28px">🤝</div><div style="font-weight:700;font-size:13px;margin-top:4px">Suppliers</div></div>
+    </div>
+  </div>
+
+  <div class="tab role-tab-vendor" id="tab-vend-auctions">
+    <div class="sec-title"><span>🔨</span>Live &amp; Upcoming Auctions</div>
+    <div id="vend-auctions-list"></div>
+  </div>
+
+  <div class="tab role-tab-vendor" id="tab-vend-orders">
+    <div class="sec-title"><span>📦</span>My Orders</div>
+    <div id="vend-orders-list"></div>
+  </div>
+
+  <div class="tab role-tab-vendor" id="tab-vend-prices">
+    <div class="sec-title"><span>📈</span>Market Price Trends</div>
+    <div class="compare-filters" id="vend-compare-filters"></div>
+    <div class="chart-container"><canvas id="vend-compare-chart"></canvas></div>
+    <div class="sec-title"><span>⚓</span>Harbour-wise Wholesale Prices</div>
+    <div class="chart-container"><canvas id="vend-harbour-chart"></canvas></div>
+  </div>
+
+  <!-- ======================== SHARED SETTINGS TAB ======================== -->
+  <div class="tab" id="tab-settings">
+    <div class="sec-title"><span>⚙️</span>Settings</div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Appearance</div>
+    <div class="settings-section">
+      <div class="settings-row" onclick="toggleTheme()">
+        <div class="settings-row-left"><span class="si">🌙</span>Dark Mode</div>
+        <div class="toggle-switch" id="dark-toggle"></div>
+      </div>
+      <div class="settings-row" onclick="toggleLangPanel()">
+        <div class="settings-row-left"><span class="si">🌐</span>Language</div>
+        <span style="font-size:12px;color:var(--muted)" id="current-lang-label">English</span>
+      </div>
+      <div class="settings-row" onclick="showAlert('Graph style changed!')">
+        <div class="settings-row-left"><span class="si">📊</span>Graph Style</div>
+        <span style="font-size:12px;color:var(--muted)">Line</span>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;margin-top:14px">Role</div>
+    <div class="settings-section">
+      <div class="settings-row" onclick="showRoleSwitcher()">
+        <div class="settings-row-left"><span class="si">🔄</span>Current Role</div>
+        <span style="font-size:12px;color:var(--muted)" id="settings-role-label">Fisherman</span>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;margin-top:14px">Profile</div>
+    <div class="settings-section">
+      <div class="settings-row" onclick="showAlert('Profile editing opening...')">
+        <div class="settings-row-left"><span class="si">👤</span>Edit Profile</div><span>›</span>
+      </div>
+      <div class="settings-row" onclick="showAlert('Verified ✅')">
+        <div class="settings-row-left"><span class="si">✅</span>Verification Status</div>
+        <span class="pill">Verified</span>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;margin-top:14px">Notifications</div>
+    <div class="settings-section">
+      <div class="settings-row"><div class="settings-row-left"><span class="si">🔔</span>Price Alerts</div><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="settings-row"><div class="settings-row-left"><span class="si">📢</span>Harbour Notices</div><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="settings-row"><div class="settings-row-left"><span class="si">🌊</span>Weather Alerts</div><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;margin-top:14px">Support</div>
+    <div class="settings-section">
+      <div class="settings-row" onclick="openFeedbackModal()"><div class="settings-row-left"><span class="si">💬</span>Send Feedback</div><span>›</span></div>
+      <div class="settings-row" onclick="showAlert('Calling: 1800-425-1660 (Toll Free)')"><div class="settings-row-left"><span class="si">📞</span>Customer Care</div><span style="font-size:12px;color:var(--muted)">1800-425-1660</span></div>
+    </div>
+    <div style="text-align:center;margin:20px 0;font-size:11px;color:var(--muted)">Smart Fishing Harbour v2.0 · IBM × Kerala Govt Hackathon 2026</div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- BOTTOM NAV -->
+<nav id="bottom-nav"></nav>
+
+<!-- AI FAB -->
+<button id="ai-fab" onclick="toggleAI()" title="AI Assistant">🤖</button>
+
+<!-- AI PANEL -->
+<div id="ai-panel">
+  <div id="ai-header">
+    <span>🤖 Harbour AI Assistant</span>
+    <button onclick="toggleAI()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:24px;height:24px;font-size:14px;cursor:pointer">✕</button>
+  </div>
+  <div id="ai-messages">
+    <div class="ai-msg bot">Hello! I'm your Smart Harbour AI. Ask me about fish prices, auction timings, weather, or any fishing-related questions!</div>
+  </div>
+  <div id="ai-input-row">
+    <input id="ai-input" placeholder="Ask anything..." onkeydown="if(event.key==='Enter')sendAI()"/>
+    <button id="ai-send" onclick="sendAI()">➤</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-content">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-inner"></div>
+  </div>
+</div>
+
+<div class="overlay" id="feedback-overlay" onclick="closeFeedback(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeFeedback()">✕</button>
+    <div class="modal-title">Send Feedback</div>
+    <textarea style="width:100%;height:100px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13px;color:var(--text);resize:none;outline:none" placeholder="Share your experience or suggestions..."></textarea>
+    <div class="rating-input" id="fb-rating">
+      <span onclick="setFbRating(1)">⭐</span><span onclick="setFbRating(2)">⭐</span><span onclick="setFbRating(3)">⭐</span><span onclick="setFbRating(4)">⭐</span><span onclick="setFbRating(5)">⭐</span>
+    </div>
+    <button onclick="closeFeedback();showAlert('Thank you for your feedback! 🙏')" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;margin-top:8px">Submit Feedback</button>
+  </div>
+</div>
+
+<script>
+
+// ===== DATA =====
+const FISH_DATA = [
+  {name:"Sardine",ml:"ഇലിശ്",icon:"🐟",min:42,max:68,trend:"up",demand:88,arrivedMins:35,origin:"Munambam",qty:420,img:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Sardine_at_Monterey_Bay_Aquarium.jpg/320px-Sardine_at_Monterey_Bay_Aquarium.jpg"},
+  {name:"Mackerel",ml:"അയ്‌ല",icon:"🐠",min:55,max:90,trend:"up",demand:76,arrivedMins:52,origin:"Cochin",qty:310,img:"https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Atlantic_Mackerel.jpg/320px-Atlantic_Mackerel.jpg"},
+  {name:"Pomfret",ml:"ആവോലി",icon:"🐡",min:280,max:450,trend:"up",demand:65,arrivedMins:90,origin:"Beypore",qty:85,img:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Silver_Pomfret.jpg/320px-Silver_Pomfret.jpg"},
+  {name:"Kingfish",ml:"അയ്‌ക്കൂര",icon:"🐟",min:320,max:520,trend:"down",demand:58,arrivedMins:140,origin:"Ponnani",qty:60,img:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Scomberomorus_commerson_1.jpg/320px-Scomberomorus_commerson_1.jpg"},
+  {name:"Tuna",ml:"ചൂര",icon:"🐟",min:180,max:280,trend:"up",demand:82,arrivedMins:20,origin:"Munambam",qty:190,img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Bluefin-tuna.jpg/320px-Bluefin-tuna.jpg"},
+  {name:"Prawn",ml:"ചെമ്മീൻ",icon:"🦐",min:380,max:650,trend:"up",demand:91,arrivedMins:10,origin:"Cochin",qty:220,img:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Prawns_at_Billingsgate_fish_market.jpg/320px-Prawns_at_Billingsgate_fish_market.jpg"},
+  {name:"Crab",ml:"ഞണ്ട്",icon:"🦀",min:250,max:420,trend:"down",demand:54,arrivedMins:180,origin:"Sakthikulangara",qty:45,img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Blue_crab_on_market.jpg/320px-Blue_crab_on_market.jpg"},
+  {name:"Squid",ml:"കണവ",icon:"🦑",min:120,max:200,trend:"up",demand:72,arrivedMins:65,origin:"Beypore",qty:130,img:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Squid_english_en.jpg/320px-Squid_english_en.jpg"},
+];
+
+const BUYERS = [
+  {id:1,name:"Mohammed Shafi",type:"wholesale",fish:["Sardine","Mackerel","Tuna"],harbour:"Munambam",rating:4.7,reviews:82,verified:true,phone:"9876543210",bio:"20+ years wholesale trader at Munambam. Fair pricing guaranteed.",img:"https://randomuser.me/api/portraits/men/32.jpg"},
+  {id:2,name:"Lakshmi Exports Pvt",type:"export",fish:["Prawn","Pomfret","Kingfish"],harbour:"Cochin",rating:4.9,reviews:145,verified:true,phone:"9876500100",bio:"MPEDA certified exporter. Best rates for premium catch.",img:"https://randomuser.me/api/portraits/women/45.jpg"},
+  {id:3,name:"Thomas Fish Traders",type:"retail",fish:["Sardine","Crab","Squid"],harbour:"Sakthikulangara",rating:4.3,reviews:56,verified:false,phone:"9800123456",bio:"Local retail buyer. Same-day payment assured.",img:"https://randomuser.me/api/portraits/men/67.jpg"},
+  {id:4,name:"Fathima Cold Chain",type:"wholesale",fish:["Tuna","Kingfish","Mackerel"],harbour:"Beypore",rating:4.6,reviews:91,verified:true,phone:"9900112233",bio:"Cold chain solutions with best wholesale prices.",img:"https://randomuser.me/api/portraits/women/22.jpg"},
+  {id:5,name:"Kerala Fish Mart",type:"retail",fish:["Prawn","Sardine"],harbour:"Ponnani",rating:4.1,reviews:38,verified:false,phone:"9988776655",bio:"Direct from harbour to consumer. No middlemen.",img:"https://randomuser.me/api/portraits/men/54.jpg"},
+];
+
+const HARBOURS = [
+  {id:"munambam",name:"Munambam Fishing Harbour",district:"Ernakulam",lat:10.1782,lng:76.1697,phone:"0484-2233445",rating:4.5,reviews:203,capacity:"450 boats",auction:"6:00 AM – 10:00 AM",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Munambam_Harbour_01.jpg/480px-Munambam_Harbour_01.jpg",feedback:[{user:"Rajan K.",stars:5,text:"Best auction facilities in Kerala. Very transparent pricing."},{user:"Suresh M.",stars:4,text:"Good infrastructure. Parking can improve."},{user:"Anwar P.",stars:5,text:"Ice plant always available. Great management."}]},
+  {id:"cochin",name:"Cochin Fisheries Harbour",district:"Ernakulam",lat:9.9312,lng:76.2673,phone:"0484-2668599",rating:4.8,reviews:512,capacity:"2000 boats",auction:"5:30 AM – 11:00 AM",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Cochin_harbour_2.jpg/480px-Cochin_harbour_2.jpg",feedback:[{user:"Jijo T.",stars:5,text:"World class facilities. Best in Kerala."},{user:"Meera N.",stars:5,text:"Export facilities are excellent here."}]},
+  {id:"sakthikulangara",name:"Sakthikulangara Harbour",district:"Kollam",lat:8.8932,lng:76.5826,phone:"0474-2763200",rating:4.3,reviews:187,capacity:"800 boats",auction:"6:30 AM – 10:30 AM",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Sakthikulangara_harbour.jpg/480px-Sakthikulangara_harbour.jpg",feedback:[{user:"Pradeep V.",stars:4,text:"Active fish market. Good prawn availability."},{user:"Santha L.",stars:4,text:"Needs better cold storage. Otherwise fine."}]},
+  {id:"beypore",name:"Beypore Fishing Harbour",district:"Kozhikode",lat:11.1786,lng:75.8082,phone:"0495-2411022",rating:4.2,reviews:142,capacity:"600 boats",auction:"7:00 AM – 11:00 AM",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Beypore_Harbour.jpg/480px-Beypore_Harbour.jpg",feedback:[{user:"Hameed K.",stars:4,text:"Nice harbour. Mackerel prices are great here."},{user:"Bindu R.",stars:4,text:"Management responsive and helpful."}]},
+  {id:"ponnani",name:"Ponnani Fishing Harbour",district:"Malappuram",lat:10.7705,lng:75.9099,phone:"0494-2672500",rating:4.0,reviews:98,capacity:"350 boats",auction:"7:00 AM – 10:00 AM",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Ponnani_harbour.jpg/480px-Ponnani_harbour.jpg",feedback:[{user:"Musthafa P.",stars:4,text:"Growing harbour. Good for small boats."},{user:"Jaseela N.",stars:3,text:"Ice plant capacity needs expansion."}]},
+];
+
+const NOTICES = [
+  {id:1,title:"Auction Timing Change – Munambam",date:"24 Jan 2026",type:"urgent",preview:"Morning auction shifted to 5:30 AM due to high catch volumes.",detail:"Due to exceptionally high sardine and mackerel catch volumes expected this week, the morning auction at Munambam Harbour has been moved from 6:00 AM to 5:30 AM starting 25 January 2026. All registered fishermen and traders must register by 5:15 AM. Contact: 0484-2233445."},
+  {id:2,title:"New Ice Plant Unit Commissioned",date:"22 Jan 2026",type:"info",preview:"Capacity increased by 50 tons/day at Sakthikulangara.",detail:"The Kerala Fisheries Department is pleased to announce commissioning of a new 50 ton/day ice plant unit at Sakthikulangara Harbour. The unit is operational from 22 January 2026. Fishermen may book ice at ₹3.50/kg."},
+  {id:3,title:"Export Quality Inspection Camp",date:"20 Jan 2026",type:"info",preview:"Free quality grading for export-bound catch at Cochin Harbour.",detail:"MPEDA in association with Kerala Fisheries will conduct a free fish quality grading and certification camp at Cochin Fisheries Harbour on 28 January 2026 from 8:00 AM to 2:00 PM."},
+  {id:4,title:"Bad Weather Warning – North Kerala",date:"19 Jan 2026",type:"urgent",preview:"IMD warns rough seas for Kozhikode and Kannur districts.",detail:"The India Meteorological Department has issued a warning for rough sea conditions off the north Kerala coast from 20–22 January 2026. Wind speed may reach 45 km/h with wave height up to 3 metres. Fishermen are advised not to venture into the sea."},
+  {id:5,title:"Digital Auction Platform Launch",date:"17 Jan 2026",type:"info",preview:"Online real-time bidding system launching at 5 harbours.",detail:"Kerala Fisheries Department in partnership with IBM is launching a digital auction platform at Munambam, Cochin, Sakthikulangara, Beypore, and Ponnani harbours. Training sessions on 25–27 January 2026."},
+];
+
+const STORAGE_DATA = [
+  {name:"Munambam Ice Plant",type:"Ice Plant",capacity:120,used:78,status:"ok",temp:"−2°C",harbour:"Munambam",rate:"₹3.50/kg",contact:"0484-2233445"},
+  {name:"Munambam Cold Storage A",type:"Cold Storage",capacity:80,used:45,status:"ok",temp:"−18°C",harbour:"Munambam",rate:"₹12/kg/day",contact:"0484-2233446"},
+  {name:"Cochin Ice Plant",type:"Ice Plant",capacity:300,used:290,status:"warn",temp:"−2°C",harbour:"Cochin",rate:"₹3.20/kg",contact:"0484-2668599"},
+  {name:"Cochin Cold Storage B",type:"Cold Storage",capacity:200,used:110,status:"ok",temp:"−20°C",harbour:"Cochin",rate:"₹10/kg/day",contact:"0484-2668600"},
+  {name:"Sakthikulangara Ice Plant",type:"Ice Plant",capacity:180,used:160,status:"warn",temp:"−1°C",harbour:"Sakthikulangara",rate:"₹3.50/kg",contact:"0474-2763200"},
+  {name:"Beypore Cold Storage",type:"Cold Storage",capacity:60,used:15,status:"ok",temp:"−18°C",harbour:"Beypore",rate:"₹11/kg/day",contact:"0495-2411022"},
+  {name:"Ponnani Ice Plant",type:"Ice Plant",capacity:80,used:80,status:"off",temp:"N/A",harbour:"Ponnani",rate:"₹4.00/kg",contact:"0494-2672500"},
+];
+
+const COMPARE_DATA = {
+  labels:["7 days ago","6","5","4","3","2","Yesterday","Today"],
+  datasets:{
+    "Sardine":{past:[38,40,45,42,48,50,55,65]},
+    "Mackerel":{past:[50,52,58,60,55,62,68,85]},
+    "Prawn":{past:[380,395,410,400,420,440,430,600]},
+    "Tuna":{past:[160,170,175,180,185,190,195,255]},
+  }
+};
+
+const HARBOUR_PRICE_DATA = {
+  labels:["Sardine","Mackerel","Prawn","Tuna","Pomfret"],
+  harbours:{"Munambam":[65,85,600,255,380],"Cochin":[62,88,650,265,420],"Sakthikulangara":[60,80,580,248,370],"Beypore":[63,82,590,252,375]}
+};
+
+const CALENDAR_EVENTS = {
+  "2026-01-25":[{title:"Auction Time Change Effective",type:"major"},{title:"Digital Auction Training – All Harbours",type:"major"}],
+  "2026-01-26":[{title:"Republic Day – Holiday",type:"holiday"}],
+  "2026-01-28":[{title:"Export Quality Camp – Cochin",type:"major"}],
+  "2026-01-30":[{title:"Harbour Management Meeting",type:"minor"}],
+  "2026-02-02":[{title:"Fisheries Department Inspection",type:"major"}],
+  "2026-02-05":[{title:"Community Fishing Festival",type:"minor"}],
+  "2026-02-10":[{title:"New Ice Plant Inauguration – Ponnani",type:"major"}],
+  "2026-02-14":[{title:"Buyer Registration Drive",type:"minor"}],
+  "2026-02-19":[{title:"Maha Shivaratri – Holiday",type:"holiday"}],
+  "2026-03-18":[{title:"Holi – Holiday",type:"holiday"}],
+};
+const HOLIDAYS = new Set(["2026-01-26","2026-02-19","2026-03-18","2026-04-14","2026-08-15","2026-10-02","2026-11-01","2026-12-25"]);
+
+const MAINTENANCE_TASKS = [
+  {id:1,title:"Dock Gate Hydraulic Failure",category:"Dock Damage",priority:"critical",status:"pending",worker:"Unassigned",reported:"2 hrs ago",desc:"Main dock gate hydraulic system not responding. Cannot open/close gate."},
+  {id:2,title:"Ice Machine Unit 3 Breakdown",category:"Ice Machine",priority:"critical",status:"in-progress",worker:"Suresh P.",reported:"4 hrs ago",desc:"Unit 3 compressor failure. 40 ton/day capacity lost."},
+  {id:3,title:"Electrical Panel Sparking – Shed B",category:"Electrical",priority:"critical",status:"pending",worker:"Unassigned",reported:"1 hr ago",desc:"Visible sparking in main electrical panel. Potential fire hazard."},
+  {id:4,title:"Broken Flood Lights – Pier 2",category:"Broken Lights",priority:"high",status:"pending",worker:"Unassigned",reported:"Yesterday",desc:"4 flood lights out on Pier 2. Night operations affected."},
+  {id:5,title:"Water Supply Blockage – Zone C",category:"Water Supply",priority:"high",status:"in-progress",worker:"Ravi K.",reported:"Yesterday",desc:"Main water supply pipe blocked. No water in Zone C."},
+  {id:6,title:"Drainage Overflow – Auction Hall",category:"Drainage",priority:"high",status:"pending",worker:"Unassigned",reported:"3 hrs ago",desc:"Drains overflowing in auction hall. Hygiene concern."},
+  {id:7,title:"Cleaning Required – Weighing Area",category:"Cleaning",priority:"medium",status:"pending",worker:"Unassigned",reported:"Today",desc:"Weighing area needs deep cleaning after yesterday's large catch."},
+  {id:8,title:"Fuel Pump Sensor Fault",category:"Equipment",priority:"medium",status:"pending",worker:"Unassigned",reported:"Today",desc:"Fuel pump sensor showing incorrect readings."},
+  {id:9,title:"Toilet Block Repair – Fishermen Quarters",category:"Drainage",priority:"medium",status:"in-progress",worker:"Jose M.",reported:"2 days ago",desc:"Plumbing repair needed in fishermen quarters block A."},
+  {id:10,title:"Winch Motor Lubrication",category:"Equipment",priority:"medium",status:"completed",worker:"Thomas V.",reported:"Yesterday",desc:"Routine lubrication completed for all dock winch motors."},
+  {id:11,title:"Safety Railing Replacement – Berth 4",category:"Dock Damage",priority:"high",status:"completed",worker:"Arjun N.",reported:"2 days ago",desc:"Corroded safety railing on Berth 4 replaced."},
+  {id:12,title:"Canteen Exhaust Fan Repair",category:"Equipment",priority:"medium",status:"completed",worker:"Suresh P.",reported:"3 days ago",desc:"Exhaust fan motor replaced and tested."},
+];
+
+const ISSUE_CATEGORIES = [
+  {icon:"💡",label:"Broken Lights"},{icon:"🔧",label:"Equipment Fault"},
+  {icon:"💧",label:"Water Supply"},{icon:"🧊",label:"Ice Machine"},
+  {icon:"🚰",label:"Drainage"},{icon:"⚡",label:"Electrical"},
+  {icon:"🛳️",label:"Dock Damage"},{icon:"🧹",label:"Cleaning"},
+];
+
+const LIVE_AUCTIONS = [
+  {id:1,fish:"Seer Fish (Neymeen)",qty:85,startPrice:650,bids:[{buyer:"Buyer A – Kerala Traders",amount:680},{buyer:"Buyer B – Cochin Exports",amount:700},{buyer:"Buyer C – Fathima Cold Chain",amount:725}],timeLeft:187,lot:"LOT-2026-0142"},
+  {id:2,fish:"Tiger Prawn",qty:42,startPrice:820,bids:[{buyer:"Buyer X – Lakshmi Exports",amount:855},{buyer:"Buyer Y – Dubai Fisheries",amount:890}],timeLeft:324,lot:"LOT-2026-0143"},
+];
+const AUCTION_LOTS = [
+  {id:"LOT-2026-0140",fish:"Pomfret",qty:120,startPrice:380,status:"completed",winner:"Cochin Fresh Foods",finalBid:440},
+  {id:"LOT-2026-0141",fish:"Squid",qty:200,startPrice:120,status:"completed",winner:"Thomas Traders",finalBid:165},
+  {id:"LOT-2026-0142",fish:"Seer Fish",qty:85,startPrice:650,status:"live",winner:null,finalBid:null},
+  {id:"LOT-2026-0143",fish:"Tiger Prawn",qty:42,startPrice:820,status:"live",winner:null,finalBid:null},
+  {id:"LOT-2026-0144",fish:"Mackerel",qty:350,startPrice:55,status:"upcoming",winner:null,finalBid:null},
+  {id:"LOT-2026-0145",fish:"Sardine",qty:500,startPrice:42,status:"upcoming",winner:null,finalBid:null},
+];
+
+const ADMIN_ALERTS = [
+  {type:"weather",icon:"⚠️",title:"Rough Sea Warning – North Kerala",msg:"IMD: Wave height 3m expected Jan 20-22. Kozhikode, Kannur, Kasaragod.",time:"2 hrs ago"},
+  {type:"infra",icon:"🔧",title:"Ice Plant Unit 3 Offline – Munambam",msg:"Unit 3 compressor failure. Maintenance team dispatched.",time:"4 hrs ago"},
+  {type:"emergency",icon:"🚨",title:"Electrical Fault – Shed B",msg:"Sparking reported in main electrical panel. Area cordoned off.",time:"1 hr ago"},
+  {type:"announce",icon:"📢",title:"Auction Timing Changed",msg:"Morning auction at Munambam shifted to 5:30 AM from Jan 25.",time:"Yesterday"},
+  {type:"quality",icon:"🐟",title:"Prawn Quality Alert",msg:"Batch QC-445 flagged for quality check before auction. Hold pending.",time:"3 hrs ago"},
+];
+
+const VENDOR_ORDERS = [
+  {id:"ORD-001",fish:"Prawn",qty:"80 kg",amount:"₹52,000",supplier:"Lakshmi Exports",status:"delivered",date:"Today 8:30 AM"},
+  {id:"ORD-002",fish:"Seer Fish",qty:"50 kg",amount:"₹36,250",supplier:"Munambam Auction",status:"processing",date:"Today 6:00 AM"},
+  {id:"ORD-003",fish:"Pomfret",qty:"30 kg",amount:"₹13,200",supplier:"Beypore Harbour",status:"pending",date:"Today 5:00 AM"},
+  {id:"ORD-004",fish:"Tuna",qty:"100 kg",amount:"₹26,500",supplier:"Cochin Auction",status:"delivered",date:"Yesterday"},
+];
+
+const NOTIFICATIONS = [
+  {id:1,sender:"Munambam Harbour",icon:"⚓",msg:"Auction timing changed to 5:30 AM starting tomorrow. Register before 5:15 AM.",time:"2 hrs ago",read:false},
+  {id:2,sender:"Lakshmi Exports Pvt",icon:"🧑‍💼",msg:"Interested in 200 kg prawn catch. Please call 9876500100 by 6 PM today.",time:"3 hrs ago",read:false},
+  {id:3,sender:"Kerala Fisheries Dept",icon:"🏛️",msg:"Digital auction platform training on Jan 25–27. Attendance mandatory.",time:"5 hrs ago",read:false},
+  {id:4,sender:"Mohammed Shafi",icon:"🧑‍💼",msg:"Looking for 500 kg sardine bulk lot. Best price guaranteed.",time:"Yesterday",read:false},
+  {id:5,sender:"Cochin Harbour",icon:"⚓",msg:"Ice plant near capacity. Arrive early for ice allocation.",time:"Yesterday",read:true},
+  {id:6,sender:"IMD Weather Alert",icon:"🌊",msg:"Rough seas expected Jan 20–22 in North Kerala. Do not venture out.",time:"2 days ago",read:true},
+  {id:7,sender:"Fathima Cold Chain",icon:"🧑‍💼",msg:"We buy Tuna and Kingfish at premium rates this week.",time:"2 days ago",read:true},
+];
+
+const LANGUAGES = [
+  {code:"en",name:"English",native:"English"},{code:"ml",name:"Malayalam",native:"മലയാളം"},
+  {code:"hi",name:"Hindi",native:"हिंदी"},{code:"ta",name:"Tamil",native:"தமிழ்"},
+  {code:"te",name:"Telugu",native:"తెలుగు"},{code:"kn",name:"Kannada",native:"ಕನ್ನಡ"},
+  {code:"gu",name:"Gujarati",native:"ગુજરાતી"},{code:"mr",name:"Marathi",native:"मराठी"},
+  {code:"bn",name:"Bengali",native:"বাংলা"},{code:"ur",name:"Urdu",native:"اردو"},
+];
+
+const AI_RESPONSES = {
+  "sardine":["Sardines are fetching ₹42–68/kg today. Munambam and Cochin have the best prices.","Sardine demand is at 88% – one of the highest today!"],
+  "prawn":["Prawns are the top earner today at ₹380–650/kg. Export buyers are active at Cochin.","Prawn demand is at 91% – highest among all fish today."],
+  "mackerel":["Mackerel prices range ₹55–90/kg. Beypore has slightly higher prices today."],
+  "auction":["Morning auctions typically run 5:30–11:00 AM. Munambam starts at 5:30 AM, Cochin at 5:30 AM."],
+  "price":["Current top prices: Prawn ₹650, Pomfret ₹450, Kingfish ₹520. Check Compare tab for details."],
+  "harbour":["Kerala has 5 major fishing harbours: Munambam, Cochin, Sakthikulangara, Beypore, and Ponnani."],
+  "weather":["Weather advisory: Rough seas expected in North Kerala (Kozhikode, Kannur) Jan 20–22. South Kerala conditions normal."],
+  "ice":["Ice availability: Munambam (42% free), Cochin (near full – 97% used), Ponnani ice plant offline."],
+  "fresh":["Prawn arrived 10 mins ago – very fresh! Tuna arrived 20 mins ago – excellent quality."],
+  "default":["I can help with fish prices, harbour info, auction timings, ice plant status, and more! Try asking about a specific fish.","Check the Compare tab to see price trends across harbours and over the past week!"],
+};
+
+// ===== ROLE CONFIG =====
+const ROLE_CONFIG = {
+  fisherman:{
+    icon:"🚤",label:"Fisherman",profileName:"Rajan Kumar",profileSub:"Fisherman · Munambam",
+    nav:[
+      {tab:"home",icon:"🏠",label:"Home"},
+      {tab:"price",icon:"💹",label:"Prices"},
+      {tab:"buyers",icon:"🧑‍💼",label:"Buyers"},
+      {tab:"harbour",icon:"⚓",label:"Harbours"},
+      {tab:"compare",icon:"📈",label:"Compare"},
+      {tab:"notice",icon:"📢",label:"Notices"},
+      {tab:"storage",icon:"🧊",label:"Storage"},
+    ],
+    homeTab:"home"
+  },
+  customer:{
+    icon:"🐟",label:"Fish Customer",profileName:"Priya Nair",profileSub:"Customer · Ernakulam",
+    nav:[
+      {tab:"cust-home",icon:"🏠",label:"Home"},
+      {tab:"cust-sellers",icon:"📍",label:"Sellers"},
+      {tab:"cust-weather",icon:"🌊",label:"Weather"},
+      {tab:"notice",icon:"📢",label:"Notices"},
+    ],
+    homeTab:"cust-home"
+  },
+  maintenance:{
+    icon:"🏗️",label:"Maintenance",profileName:"Babu Varghese",profileSub:"Maintenance Staff · Munambam",
+    nav:[
+      {tab:"maint-home",icon:"🏠",label:"Dashboard"},
+      {tab:"maint-report",icon:"📋",label:"Report"},
+      {tab:"maint-tasks",icon:"👷",label:"Tasks"},
+      {tab:"notice",icon:"📢",label:"Notices"},
+    ],
+    homeTab:"maint-home"
+  },
+  auction:{
+    icon:"🔨",label:"Auction Owner",profileName:"Krishnamurthy",profileSub:"Auction Manager · Munambam",
+    nav:[
+      {tab:"auct-home",icon:"🏠",label:"Dashboard"},
+      {tab:"auct-lots",icon:"📦",label:"Lots"},
+      {tab:"auct-history",icon:"📜",label:"History"},
+      {tab:"notice",icon:"📢",label:"Notices"},
+    ],
+    homeTab:"auct-home"
+  },
+  admin:{
+    icon:"🏛️",label:"Harbour Authority",profileName:"Dr. Anitha Menon",profileSub:"Harbour Administrator · Munambam",
+    nav:[
+      {tab:"admin-home",icon:"🏠",label:"Command"},
+      {tab:"admin-alerts",icon:"🚨",label:"Alerts"},
+      {tab:"admin-auctions",icon:"🔨",label:"Auctions"},
+      {tab:"notice",icon:"📢",label:"Notices"},
+    ],
+    homeTab:"admin-home"
+  },
+  vendor:{
+    icon:"🚚",label:"Fish Vendor",profileName:"Sanjay Mehta",profileSub:"Fish Trader · Kerala Markets",
+    nav:[
+      {tab:"vend-home",icon:"🏠",label:"Dashboard"},
+      {tab:"vend-auctions",icon:"🔨",label:"Auctions"},
+      {tab:"vend-orders",icon:"📦",label:"Orders"},
+      {tab:"vend-prices",icon:"📈",label:"Prices"},
+      {tab:"notice",icon:"📢",label:"Notices"},
+    ],
+    homeTab:"vend-home"
+  },
+};
+
+// ===== STATE =====
+let currentRole = "fisherman";
+let currentTab = "home";
+let compareChart = null, harbourChart = null, vendCompareChart = null, vendHarbourChart = null;
+let calYear = 2026, calMonth = 0;
+let currentLang = "en";
+let selectedCompareFilter = "Sardine";
+let selectedVendFilter = "Sardine";
+let selectedRoleOnScreen = null;
+let issuePriority = "critical";
+let auctionTimers = {};
+let bgAnimId = null;
+let custBudget = "all";
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', () => {
+  initBgCanvas();
+  renderLangGrid();
+  renderNotifications();
+  renderIssueCats();
+  // Don't render dashboard yet — wait for role selection
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('bottom-nav').style.display = 'none';
+  document.getElementById('main').style.display = 'none';
+  document.getElementById('ai-fab').style.display = 'none';
+});
+
+// ===== ROLE SELECTION SCREEN =====
+function selectRole(role, el) {
+  selectedRoleOnScreen = role;
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('role-enter-btn').style.display = 'block';
+}
+
+function enterDashboard() {
+  if (!selectedRoleOnScreen) return;
+  applyRole(selectedRoleOnScreen);
+  const rs = document.getElementById('role-screen');
+  rs.classList.add('hidden');
+  setTimeout(() => rs.style.display = 'none', 400);
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('bottom-nav').style.display = 'flex';
+  document.getElementById('main').style.display = 'block';
+  document.getElementById('ai-fab').style.display = 'flex';
+  initDashboard();
+}
+
+function showRoleScreen() {
+  const rs = document.getElementById('role-screen');
+  rs.style.display = 'flex';
+  rs.style.opacity = '0';
+  setTimeout(() => { rs.style.opacity = ''; rs.classList.remove('hidden'); }, 10);
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('bottom-nav').style.display = 'none';
+  document.getElementById('main').style.display = 'none';
+  document.getElementById('ai-fab').style.display = 'none';
+  stopAuctionTimers();
+}
+
+function showRoleSwitcher() {
+  closeAllPanels();
+  document.getElementById('role-switcher-panel').classList.toggle('open');
+}
+
+function switchRoleTo(role) {
+  document.getElementById('role-switcher-panel').classList.remove('open');
+  const main = document.getElementById('main');
+  main.classList.add('switching');
+  setTimeout(() => {
+    applyRole(role);
+    initDashboard();
+    main.classList.remove('switching');
+  }, 250);
+}
+
+function applyRole(role) {
+  currentRole = role;
+  const cfg = ROLE_CONFIG[role];
+  // Update topbar pill
+  document.getElementById('role-pill-icon').textContent = cfg.icon;
+  document.getElementById('role-pill-label').textContent = cfg.label;
+  // Update menu drawer
+  document.getElementById('menu-profile-name').textContent = cfg.profileName;
+  document.getElementById('menu-profile-role').textContent = cfg.profileSub;
+  document.getElementById('menu-avatar-icon').textContent = cfg.icon;
+  // Settings role label
+  document.getElementById('settings-role-label').textContent = cfg.label;
+  // Update active state in role switcher
+  document.querySelectorAll('.rs-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.role === role);
+  });
+  // Render bottom nav
+  const nav = document.getElementById('bottom-nav');
+  const navItems = cfg.nav.map(n => `<button class="nav-item${currentTab===n.tab?' active':''}" data-tab="${n.tab}" onclick="openTab('${n.tab}')"><span class="ni">${n.icon}</span><span>${n.label}</span></button>`).join('');
+  nav.innerHTML = navItems + `<button class="nav-item${currentTab==='settings'?' active':''}" data-tab="settings" onclick="openTab('settings')"><span class="ni">⚙️</span><span>Settings</span></button>`;
+  // Navigate to home tab for this role
+  openTab(cfg.homeTab);
+}
+
+function initDashboard() {
+  renderDeals();
+  renderBestsellers();
+  renderPriceTable();
+  renderDemand();
+  renderBuyers();
+  renderHarbours();
+  renderNotices();
+  renderCalendar();
+  renderStorage();
+  renderCustomerFish();
+  renderCustomerSellers();
+  renderCustomerWeather();
+  renderMaintBoard();
+  renderAllMaintTasks();
+  renderLiveAuctions();
+  renderAuctLots();
+  renderAuctHistory();
+  renderAdminAlerts();
+  renderAdminAuctionOverview();
+  renderVendFish();
+  renderVendAuctions();
+  renderVendOrders();
+  renderCustNotices();
+  if (currentRole === 'vendor' || currentRole === 'fisherman') {
+    setTimeout(() => { renderCompareChart(); renderHarbourChart(); renderVendCharts(); }, 200);
+  }
+}
+
+// ===== TAB NAVIGATION =====
+function openTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const el = document.getElementById('tab-' + name);
+  if (el) el.classList.add('active');
+  // Update bottom nav active state
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === name));
+  currentTab = name;
+  if (name === 'compare') setTimeout(() => { renderCompareChart(); renderHarbourChart(); }, 100);
+  if (name === 'vend-prices') setTimeout(() => { renderVendCharts(); }, 100);
+}
+
+// ===== FISHERMAN – HOME =====
+function renderDeals() {
+  const deals = [
+    {fish:"Sardine",price:"₹68/kg",buyer:"Shafi Traders",deal:"Bulk 500kg deal",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Sardine_at_Monterey_Bay_Aquarium.jpg/320px-Sardine_at_Monterey_Bay_Aquarium.jpg",tab:"buyers",badge:"HOT"},
+    {fish:"Prawn",price:"₹650/kg",buyer:"Lakshmi Exports",deal:"Export grade",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Prawns_at_Billingsgate_fish_market.jpg/320px-Prawns_at_Billingsgate_fish_market.jpg",tab:"buyers",badge:"TOP"},
+    {fish:"Mackerel",price:"₹90/kg",buyer:"Kerala Fish Mart",deal:"Fresh morning",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Atlantic_Mackerel.jpg/320px-Atlantic_Mackerel.jpg",tab:"price",badge:"NEW"},
+    {fish:"Pomfret",price:"₹450/kg",buyer:"Fathima Traders",deal:"Premium grade",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Silver_Pomfret.jpg/320px-Silver_Pomfret.jpg",tab:"buyers",badge:"DEAL"},
+  ];
+  const grid = document.getElementById('deals-grid');
+  if(!grid) return;
+  grid.innerHTML = deals.map(d => `
+    <div class="deal-card" onclick="openTab('${d.tab}')">
+      <img src="${d.img}" alt="${d.fish}" onerror="this.style.background='var(--surface2)'"/>
+      <div class="dc-body">
+        <div class="dc-name">${d.fish}</div>
+        <div class="dc-price">${d.price}</div>
+        <div class="dc-buyer">👤 ${d.buyer}</div>
+        <span class="dc-badge">${d.badge}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderBestsellers() {
+  const el = document.getElementById('bestsellers-list');
+  if(!el) return;
+  const top = FISH_DATA.slice().sort((a,b) => b.demand - a.demand).slice(0,4);
+  el.innerHTML = top.map(f => `
+    <div class="card" style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:10px 14px" onclick="openTab('price')">
+      <img src="${f.img}" class="fish-img" alt="${f.name}" onerror="this.style.background='var(--surface2)'"/>
+      <div style="flex:1"><div style="font-weight:700;font-size:14px">${f.icon} ${f.name} <span class="text-muted">(${f.ml})</span></div><div style="font-size:12px;color:var(--muted)">Demand: ${f.demand}%</div></div>
+      <div><div style="font-weight:700;color:var(--price-up);font-size:15px">₹${f.max}/kg</div><div style="font-size:11px;color:var(--muted)">Max today</div></div>
+    </div>`).join('');
+}
+
+// ===== PRICE TABLE =====
+function renderPriceTable() {
+  const tbody = document.getElementById('price-tbody');
+  if(!tbody) return;
+  const sel = document.getElementById('harbour-select');
+  const harbour = sel ? sel.value : 'munambam';
+  const mult = {munambam:1,cochin:1.03,sakthikulangara:0.97,beypore:0.99,ponnani:0.96};
+  const m = mult[harbour]||1;
+  tbody.innerHTML = FISH_DATA.map(f => `
+    <tr>
+      <td><img src="${f.img}" class="fish-img" alt="${f.name}" onerror="this.style.background='var(--surface2)'"/> ${f.icon} <strong>${f.name}</strong><br><span class="text-muted" style="font-size:11px">${f.ml}</span></td>
+      <td>₹${Math.round(f.min*m)}</td>
+      <td><strong>₹${Math.round(f.max*m)}</strong></td>
+      <td>${f.trend==='up'?'<span class="up">▲ Rising</span>':'<span class="down">▼ Falling</span>'}</td>
+    </tr>`).join('');
+  renderDemand();
+}
+
+function renderDemand() {
+  const card = document.getElementById('demand-card');
+  if(!card) return;
+  card.innerHTML = `<div style="font-weight:700;margin-bottom:10px;font-size:14px">📦 Today's Catch Demand</div>` +
+    FISH_DATA.map(f => `
+    <div class="demand-item">
+      <div class="demand-label"><span>${f.icon} ${f.name}</span><span>${f.demand}%</span></div>
+      <div class="demand-bar"><div class="demand-fill" style="width:${f.demand}%"></div></div>
+    </div>`).join('');
+}
+
+// ===== BUYERS =====
+function renderBuyers() {
+  const q = (document.getElementById('buyer-search')?.value||'').toLowerCase();
+  const f = document.getElementById('buyer-filter')?.value||'all';
+  const filtered = BUYERS.filter(b => (f==='all'||b.type===f) && (b.name.toLowerCase().includes(q)||b.fish.some(x=>x.toLowerCase().includes(q))||b.harbour.toLowerCase().includes(q)));
+  const el = document.getElementById('buyers-list');
+  if(!el) return;
+  el.innerHTML = filtered.map(b => `
+    <div class="buyer-card" onclick="openBuyerModal(${b.id})">
+      <img class="buyer-avatar" src="${b.img}" alt="${b.name}" onerror="this.style.background='var(--surface2)'"/>
+      <div class="buyer-info">
+        <div class="buyer-name">${b.name}${b.verified?'<span class="verified">✓ Verified</span>':''}</div>
+        <div class="buyer-type">${b.type.toUpperCase()} · ${b.harbour}</div>
+        <div class="buyer-fish">${b.fish.join(' · ')}</div>
+        <div><span class="stars">${'★'.repeat(Math.floor(b.rating))}${'☆'.repeat(5-Math.floor(b.rating))}</span><span class="star-count">${b.rating} (${b.reviews} reviews)</span></div>
+      </div>
+    </div>`).join('') || '<div class="card" style="text-align:center;color:var(--muted)">No buyers found.</div>';
+}
+
+function openBuyerModal(id) {
+  const b = BUYERS.find(x=>x.id===id);
+  if(!b) return;
+  document.getElementById('modal-inner').innerHTML = `
+    <div class="modal-title">🧑‍💼 ${b.name}</div>
+    <img src="${b.img}" alt="${b.name}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--accent);margin-bottom:12px" onerror="this.style.background='var(--surface2)'"/>
+    <div class="pill" style="margin-bottom:8px">${b.type.toUpperCase()}</div>
+    <p style="font-size:13px;margin:6px 0">${b.bio}</p>
+    <div style="margin-top:10px"><strong>Buys:</strong> ${b.fish.join(', ')}</div>
+    <div><strong>Harbour:</strong> ${b.harbour}</div>
+    <div><strong>Phone:</strong> 📞 ${b.phone}</div>
+    <div style="margin:8px 0"><span class="stars">${'★'.repeat(Math.floor(b.rating))}</span> ${b.rating}/5 (${b.reviews} reviews)</div>
+    <div style="font-weight:700;font-size:13px;margin:10px 0 6px">Write a Review</div>
+    <div class="rating-input" id="buyer-rate"><span onclick="setBuyerRating(1,this)">⭐</span><span onclick="setBuyerRating(2,this)">⭐</span><span onclick="setBuyerRating(3,this)">⭐</span><span onclick="setBuyerRating(4,this)">⭐</span><span onclick="setBuyerRating(5,this)">⭐</span></div>
+    <textarea id="buyer-review-text" placeholder="Share your experience..." style="width:100%;height:65px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px;font-size:12px;color:var(--text);resize:none;outline:none;margin-top:6px"></textarea>
+    <label class="photo-upload-area" onclick="document.getElementById('buyer-photo-input').click()">
+      <input type="file" id="buyer-photo-input" accept="image/*" multiple onchange="previewPhotos(this,'buyer-photo-preview')"/>
+      <div style="font-size:20px;margin-bottom:3px">📷</div>
+      <div style="font-size:13px;font-weight:600;color:var(--accent)">Add Photos</div>
+      <div style="font-size:11px;color:var(--muted)">Tap to upload catch photos, receipts, etc.</div>
+    </label>
+    <div class="photo-preview-grid" id="buyer-photo-preview"></div>
+    <button onclick="submitReview('buyer-review-text','buyer-photo-preview')" style="width:100%;background:var(--accent2);color:#fff;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;margin-top:6px">📤 Submit Review</button>
+    <button onclick="closeModal();showAlert('Connecting to ${b.name}...')" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:11px;font-size:14px;font-weight:700;margin-top:8px">📞 Contact Buyer</button>
+    <button onclick="closeModal();showAlert('Report submitted.')" class="report-btn" style="width:100%;margin-top:8px;padding:9px">🚩 Report Buyer</button>`;
+  openModal();
+}
+
+// ===== HARBOURS =====
+function renderHarbours() {
+  const el = document.getElementById('harbours-list');
+  if(!el) return;
+  el.innerHTML = HARBOURS.map(h => `
+    <div class="harbour-card" onclick="openHarbourModal('${h.id}')">
+      <img src="${h.img}" alt="${h.name}" onerror="this.style.background='var(--surface2)'"/>
+      <div class="harbour-body">
+        <div class="harbour-name">⚓ ${h.name}</div>
+        <div class="harbour-loc">📍 ${h.district} · 📞 ${h.phone}</div>
+        <div class="harbour-stats">
+          <span class="hstat">⚓ ${h.capacity}</span>
+          <span class="hstat">🔨 ${h.auction}</span>
+          <span class="hstat">⭐ ${h.rating}/5</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openHarbourModal(id) {
+  const h = HARBOURS.find(x=>x.id===id);
+  if(!h) return;
+  const stars = n => '★'.repeat(Math.floor(n))+'☆'.repeat(5-Math.floor(n));
+  document.getElementById('modal-inner').innerHTML = `
+    <div class="modal-title">⚓ ${h.name}</div>
+    <img src="${h.img}" alt="${h.name}" onerror="this.style.background='var(--surface2)'"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:12px">
+      <div><strong>District</strong><br>${h.district}</div>
+      <div><strong>Capacity</strong><br>${h.capacity}</div>
+      <div><strong>Auction Hours</strong><br>${h.auction}</div>
+      <div><strong>Phone</strong><br>📞 ${h.phone}</div>
+      <div><strong>Location</strong><br>📍 ${h.lat.toFixed(4)}, ${h.lng.toFixed(4)}</div>
+      <div><strong>Rating</strong><br><span class="stars">${stars(h.rating)}</span> ${h.rating}</div>
+    </div>
+    <a href="https://www.google.com/maps?q=${h.lat},${h.lng}" target="_blank" style="display:block;text-align:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px;font-size:13px;margin-bottom:12px">🗺️ Open in Google Maps</a>
+    <div style="font-weight:700;margin-bottom:8px">💬 Fishermen's Reviews</div>
+    ${h.feedback.map(r=>`<div class="review-item"><div class="review-author">${r.user} <span class="stars">${stars(r.stars)}</span></div><div class="review-text">${r.text}</div></div>`).join('')}
+    <div style="margin-top:12px">
+      <div style="font-weight:700;margin-bottom:6px">Rate this Harbour</div>
+      <div class="rating-input"><span onclick="setHarbourRating(1,this)">⭐</span><span onclick="setHarbourRating(2,this)">⭐</span><span onclick="setHarbourRating(3,this)">⭐</span><span onclick="setHarbourRating(4,this)">⭐</span><span onclick="setHarbourRating(5,this)">⭐</span></div>
+      <textarea id="harbour-review-text" placeholder="Write your review..." style="width:100%;height:65px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px;font-size:12px;color:var(--text);resize:none;outline:none;margin-top:6px"></textarea>
+      <label class="photo-upload-area" onclick="document.getElementById('harbour-photo-input').click()">
+        <input type="file" id="harbour-photo-input" accept="image/*" multiple onchange="previewPhotos(this,'harbour-photo-preview')"/>
+        <div style="font-size:20px;margin-bottom:3px">📷</div>
+        <div style="font-size:13px;font-weight:600;color:var(--accent)">Add Photos</div>
+        <div style="font-size:11px;color:var(--muted)">Upload harbour or facility photos</div>
+      </label>
+      <div class="photo-preview-grid" id="harbour-photo-preview"></div>
+      <button onclick="submitReview('harbour-review-text','harbour-photo-preview')" style="width:100%;background:var(--accent2);color:#fff;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;margin-top:6px">📤 Submit Review</button>
+    </div>
+    <button onclick="showAlert('Report submitted.')" class="report-btn" style="width:100%;margin-top:8px;padding:9px">🚩 Report Issue</button>`;
+  openModal();
+}
+
+// ===== NOTICES =====
+function renderNotices() {
+  const el = document.getElementById('notices-list');
+  if(!el) return;
+  el.innerHTML = NOTICES.map(n => `
+    <div class="notice-item ${n.type==='urgent'?'notice-urgent':'notice-info'}" onclick="openNoticeModal(${n.id})">
+      <div class="notice-date">📅 ${n.date} · ${n.type==='urgent'?'🔴 URGENT':'🟢 INFO'}</div>
+      <div class="notice-title">${n.title}</div>
+      <div class="notice-preview">${n.preview}</div>
+    </div>`).join('');
+}
+
+function renderCustNotices() {
+  const el = document.getElementById('cust-notices');
+  if(!el) return;
+  el.innerHTML = NOTICES.slice(0,3).map(n => `
+    <div class="notice-item ${n.type==='urgent'?'notice-urgent':'notice-info'}" onclick="openNoticeModal(${n.id})">
+      <div class="notice-date">📅 ${n.date}</div>
+      <div class="notice-title">${n.title}</div>
+      <div class="notice-preview">${n.preview}</div>
+    </div>`).join('');
+}
+
+function openNoticeModal(id) {
+  const n = NOTICES.find(x=>x.id===id);
+  if(!n) return;
+  document.getElementById('modal-inner').innerHTML = `
+    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">📅 ${n.date} · ${n.type==='urgent'?'🔴 URGENT':'🟢 INFO'}</div>
+    <div class="modal-title">${n.title}</div>
+    <p style="font-size:14px;line-height:1.7;color:var(--text)">${n.detail}</p>
+    <button onclick="showAlert('Sharing notice...')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:13px;margin-top:14px;color:var(--text)">📤 Share</button>`;
+  openModal();
+}
+
+// ===== CALENDAR =====
+function renderCalendar() {
+  const el = document.getElementById('cal-month-label');
+  if(!el) return;
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  el.textContent = months[calMonth]+' '+calYear;
+  const days = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+  const first = new Date(calYear,calMonth,1).getDay();
+  const total = new Date(calYear,calMonth+1,0).getDate();
+  const today = new Date();
+  let html = days.map((d,i)=>`<div class="cal-header${i===0?' sun-header':''}">${d}</div>`).join('');
+  for(let i=0;i<first;i++) html+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=total;d++){
+    const key=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
+    const dow=new Date(calYear,calMonth,d).getDay();
+    const isSunday=dow===0;
+    const isHoliday=HOLIDAYS.has(key);
+    const evts=CALENDAR_EVENTS[key]||[];
+    const hasHoliday=evts.some(e=>e.type==='holiday');
+    const hasMajor=evts.some(e=>e.type==='major');
+    const hasMinor=evts.some(e=>e.type==='minor');
+    let extraClass='';
+    if(isHoliday||hasHoliday) extraClass='is-holiday';
+    else if(isSunday) extraClass='is-sunday';
+    else if(hasMajor) extraClass='has-major';
+    else if(hasMinor) extraClass='has-minor';
+    const clickable=evts.length>0||isHoliday;
+    html+=`<div class="cal-day ${isToday?'today':''} ${extraClass}" onclick="${clickable?`openCalEvent('${key}')`:''}"> ${d}</div>`;
+  }
+  document.getElementById('calendar-grid').innerHTML=`<div class="calendar-grid">${html}</div>`;
+}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+function openCalEvent(key){
+  const evts=CALENDAR_EVENTS[key]||[];
+  const isHoliday=HOLIDAYS.has(key);
+  const typeLabel={major:'🟣 Major Event',minor:'🔵 Minor Event',holiday:'🔴 Holiday'};
+  const typeStyle={major:'border-left-color:#7c3aed',minor:'border-left-color:#2563eb',holiday:'border-left-color:#e63946'};
+  let items='';
+  if(isHoliday&&evts.length===0) items=`<div class="notice-item" style="${typeStyle.holiday};cursor:default"><div class="notice-title">🔴 Public Holiday</div></div>`;
+  else items=evts.map(e=>`<div class="notice-item" style="${typeStyle[e.type]||typeStyle.minor};cursor:default"><div style="font-size:10px;color:var(--muted);margin-bottom:3px">${typeLabel[e.type]||'Event'}</div><div class="notice-title">📌 ${e.title}</div></div>`).join('');
+  document.getElementById('modal-inner').innerHTML=`<div class="modal-title">📅 ${key}</div>${items}`;
+  openModal();
+}
+
+// ===== STORAGE =====
+function renderStorage() {
+  const el = document.getElementById('storage-list');
+  if(!el) return;
+  el.innerHTML = STORAGE_DATA.map(s => {
+    const pct = Math.round((s.used/s.capacity)*100);
+    const sc = s.status==='ok'?'status-ok':s.status==='warn'?'status-warn':'status-off';
+    const st = s.status==='ok'?'Operational':s.status==='warn'?'Near Full':'Offline';
+    return `<div class="storage-card">
+      <div class="storage-header"><div class="storage-name">🧊 ${s.name}</div><div><span class="status-dot ${sc}"></span><span style="font-size:12px;font-weight:600">${st}</span></div></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Harbour: ${s.harbour} · Temp: ${s.temp}</div>
+      <div class="capacity-bar"><div class="capacity-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:12px;display:flex;justify-content:space-between;margin-bottom:8px"><span>${s.used}T used / ${s.capacity}T total (${pct}%)</span></div>
+      <div class="storage-meta"><span>💰 ${s.rate}</span><span>📞 ${s.contact}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ===== COMPARE CHARTS =====
+function renderCompareFilters() {
+  const el = document.getElementById('compare-filters');
+  if(!el) return;
+  el.innerHTML = Object.keys(COMPARE_DATA.datasets).map(f=>
+    `<div class="filter-chip ${f===selectedCompareFilter?'active':''}" onclick="setCompareFilter('${f}')">${f}</div>`).join('');
+}
+function setCompareFilter(f){selectedCompareFilter=f;renderCompareFilters();renderCompareChart();}
+
+function renderCompareChart() {
+  const canvas = document.getElementById('compare-chart');
+  if(!canvas) return;
+  if(compareChart){compareChart.destroy();compareChart=null;}
+  renderCompareFilters();
+  const ds = COMPARE_DATA.datasets[selectedCompareFilter];
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  const gridColor = isDark?'rgba(77,184,255,0.1)':'rgba(0,102,204,0.08)';
+  const textColor = isDark?'#5b9fd4':'#4a7a9b';
+  compareChart = new Chart(canvas, {
+    type:'line',
+    data:{labels:COMPARE_DATA.labels,datasets:[
+      {label:'Past Prices (₹/kg)',data:ds.past,borderColor:'#0066cc',backgroundColor:'rgba(0,102,204,0.08)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#0066cc'},
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{color:textColor,font:{size:12}}},title:{display:true,text:`${selectedCompareFilter} – Price Trend (₹/kg)`,color:textColor}},scales:{x:{ticks:{color:textColor},grid:{color:gridColor}},y:{ticks:{color:textColor},grid:{color:gridColor}}}}
+  });
+}
+
+function renderHarbourChart() {
+  const canvas = document.getElementById('harbour-chart');
+  if(!canvas) return;
+  if(harbourChart){harbourChart.destroy();harbourChart=null;}
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  const textColor = isDark?'#5b9fd4':'#4a7a9b';
+  const gridColor = isDark?'rgba(77,184,255,0.1)':'rgba(0,102,204,0.08)';
+  const colors=['#0066cc','#00a86b','#f5a623','#e63946'];
+  harbourChart = new Chart(canvas, {
+    type:'bar',
+    data:{labels:HARBOUR_PRICE_DATA.labels,datasets:Object.entries(HARBOUR_PRICE_DATA.harbours).map(([name,data],i)=>({label:name,data,backgroundColor:colors[i]+'bb',borderColor:colors[i],borderWidth:1}))},
+    options:{responsive:true,plugins:{legend:{labels:{color:textColor,font:{size:11}}}},scales:{x:{ticks:{color:textColor},grid:{color:gridColor}},y:{ticks:{color:textColor,callback:v=>'₹'+v},grid:{color:gridColor}}}}
+  });
+}
+
+// ===== CUSTOMER DASHBOARD =====
+function getFreshness(mins) {
+  if(mins<=30) return {label:'🟢 Very Fresh',cls:'fresh-vf'};
+  if(mins<=90) return {label:'🔵 Fresh',cls:'fresh-fr'};
+  if(mins<=180) return {label:'🟡 Moderate',cls:'fresh-ok'};
+  return {label:'🔴 Older Stock',cls:'fresh-old'};
+}
+
+function renderCustomerFish() {
+  const el = document.getElementById('cust-fish-list');
+  if(!el) return;
+  const q = (document.getElementById('cust-search')?.value||'').toLowerCase();
+  let list = FISH_DATA.filter(f => f.name.toLowerCase().includes(q) || f.ml.includes(q));
+  if(custBudget==='budget') list=list.filter(f=>f.max<100);
+  else if(custBudget==='mid') list=list.filter(f=>f.max>=100&&f.max<300);
+  else if(custBudget==='premium') list=list.filter(f=>f.max>=300);
+  el.innerHTML = list.map(f => {
+    const fresh = getFreshness(f.arrivedMins);
+    const arrText = f.arrivedMins < 60 ? `${f.arrivedMins} min ago` : `${Math.round(f.arrivedMins/60)} hr ago`;
+    return `<div class="card" style="display:flex;gap:12px;align-items:flex-start;cursor:pointer" onclick="openCustFishModal('${f.name}')">
+      <img src="${f.img}" style="width:72px;height:72px;border-radius:12px;object-fit:cover;flex-shrink:0" alt="${f.name}" onerror="this.style.background='var(--surface2)'"/>
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:15px">${f.icon} ${f.name} <span class="text-muted" style="font-weight:400;font-size:12px">${f.ml}</span></div>
+        <div style="font-size:18px;font-weight:800;color:var(--price-up);margin:2px 0">₹${f.min}–₹${f.max}/kg</div>
+        <div class="fresh-tag ${fresh.cls}">${fresh.label}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">⏰ Arrived ${arrText} · 📍 ${f.origin} · 📦 ${f.qty} kg available</div>
+      </div>
+    </div>`;
+  }).join('') || '<div class="card" style="text-align:center;color:var(--muted)">No fish found matching your search.</div>';
+}
+
+function setCustBudget(budget, el) {
+  custBudget = budget;
+  document.querySelectorAll('#budget-filters .filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderCustomerFish();
+}
+
+function openCustFishModal(name) {
+  const f = FISH_DATA.find(x=>x.name===name);
+  if(!f) return;
+  const fresh = getFreshness(f.arrivedMins);
+  const arrText = f.arrivedMins<60?`${f.arrivedMins} min ago`:`${Math.round(f.arrivedMins/60)} hr ago`;
+  document.getElementById('modal-inner').innerHTML = `
+    <div class="modal-title">${f.icon} ${f.name}</div>
+    <img src="${f.img}" alt="${f.name}" onerror="this.style.background='var(--surface2)'"/>
+    <div style="font-size:22px;font-weight:800;color:var(--price-up)">₹${f.min} – ₹${f.max} /kg</div>
+    <div class="fresh-tag ${fresh.cls}" style="margin:8px 0">${fresh.label}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin:12px 0">
+      <div><strong>Malayalam</strong><br>${f.ml}</div>
+      <div><strong>Origin</strong><br>📍 ${f.origin}</div>
+      <div><strong>Arrived</strong><br>⏰ ${arrText}</div>
+      <div><strong>Available</strong><br>📦 ${f.qty} kg</div>
+      <div><strong>Demand</strong><br>📊 ${f.demand}%</div>
+      <div><strong>Trend</strong><br>${f.trend==='up'?'<span class="up">▲ Rising</span>':'<span class="down">▼ Falling</span>'}</div>
+    </div>
+    <button onclick="closeModal();showAlert('Finding nearby sellers for ${f.name}...')" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:11px;font-size:14px;font-weight:700;margin-top:6px">📍 Find Nearby Sellers</button>`;
+  openModal();
+}
+
+function renderCustomerSellers() {
+  const el = document.getElementById('cust-sellers-list');
+  if(!el) return;
+  el.innerHTML = BUYERS.map(b => `
+    <div class="buyer-card" onclick="openBuyerModal(${b.id})">
+      <img class="buyer-avatar" src="${b.img}" alt="${b.name}" onerror="this.style.background='var(--surface2)'"/>
+      <div class="buyer-info">
+        <div class="buyer-name">${b.name}${b.verified?'<span class="verified">✓ Verified</span>':''}</div>
+        <div class="buyer-type">${b.harbour} · ${b.type.toUpperCase()}</div>
+        <div class="buyer-fish">${b.fish.join(' · ')}</div>
+        <div style="font-size:12px;color:var(--muted)">📞 ${b.phone}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderCustomerWeather() {
+  const el = document.getElementById('cust-weather-card');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="alert-item alert-weather">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-body">
+        <div class="alert-title">Rough Sea Warning – North Kerala</div>
+        <div class="alert-msg">IMD: Wave height up to 3m expected Jan 20–22. Kozhikode, Kannur, Kasaragod districts affected.</div>
+        <div class="alert-time">Updated: 2 hrs ago</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:10px">🌤️ Current Sea Conditions</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+        <div class="kpi-card"><div class="ki">🌊</div><div class="kv" style="font-size:18px">1.2m</div><div class="kl">Wave Height (South Kerala)</div></div>
+        <div class="kpi-card"><div class="ki">💨</div><div class="kv" style="font-size:18px">22 km/h</div><div class="kl">Wind Speed</div></div>
+        <div class="kpi-card"><div class="ki">🌡️</div><div class="kv" style="font-size:18px">28°C</div><div class="kl">Sea Temperature</div></div>
+        <div class="kpi-card"><div class="ki">👁️</div><div class="kv" style="font-size:18px">8 km</div><div class="kl">Visibility</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:8px">🗺️ Harbour Status</div>
+      ${HARBOURS.map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span>⚓ ${h.name}</span>
+        <span class="pill" style="background:#d4f7e8;color:#00754a">Open</span>
+      </div>`).join('')}
+    </div>`;
+}
+
+// ===== MAINTENANCE =====
+function renderIssueCats() {
+  const el = document.getElementById('issue-cat-grid');
+  if(!el) return;
+  el.innerHTML = ISSUE_CATEGORIES.map(c=>`
+    <div class="filter-chip" onclick="selectIssueCat('${c.label}',this)" style="text-align:center;padding:10px 8px">
+      <div style="font-size:22px">${c.icon}</div>
+      <div style="font-size:11px;margin-top:4px">${c.label}</div>
+    </div>`).join('');
+}
+let selectedIssueCat = '';
+function selectIssueCat(label, el) {
+  selectedIssueCat = label;
+  document.querySelectorAll('#issue-cat-grid .filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+function setIssuePriority(p) {
+  issuePriority = p;
+  ['critical','high','medium'].forEach(x=>document.getElementById('pri-'+x)?.classList.toggle('active',x===p));
+}
+function submitIssueReport() {
+  const desc = document.getElementById('issue-desc')?.value?.trim();
+  if(!selectedIssueCat){showAlert('Please select an issue category.');return;}
+  if(!desc){showAlert('Please describe the issue.');return;}
+  showAlert(`🚨 Issue reported: ${selectedIssueCat} (${issuePriority} priority). Team notified!`);
+  document.getElementById('issue-desc').value='';
+  document.getElementById('issue-photo-preview').innerHTML='';
+  document.querySelectorAll('#issue-cat-grid .filter-chip').forEach(c=>c.classList.remove('active'));
+  selectedIssueCat='';
+}
+
+function renderMaintBoard() {
+  const el = document.getElementById('maint-board');
+  if(!el) return;
+  const groups = {
+    'critical':MAINTENANCE_TASKS.filter(t=>t.priority==='critical'&&t.status!=='completed'),
+    'high':MAINTENANCE_TASKS.filter(t=>t.priority==='high'&&t.status!=='completed'),
+    'medium':MAINTENANCE_TASKS.filter(t=>t.priority==='medium'&&t.status!=='completed'),
+    'completed':MAINTENANCE_TASKS.filter(t=>t.status==='completed'),
+  };
+  const labels = {critical:'🔴 Critical',high:'🟠 High',medium:'🟡 Medium',completed:'🟢 Completed'};
+  const priClass = {critical:'priority-crit',high:'priority-high',medium:'priority-med',completed:'priority-done'};
+  el.innerHTML = `<div class="maint-board">` + Object.entries(groups).map(([p,tasks])=>`
+    <div class="maint-col">
+      <div class="maint-col-header">${labels[p]} <span style="background:var(--surface2);border-radius:20px;padding:1px 7px;font-size:11px">${tasks.length}</span></div>
+      ${tasks.slice(0,3).map(t=>`<div class="maint-item ${priClass[p]}" onclick="openMaintModal(${t.id})">
+        <div class="mi-title">${t.title}</div>
+        <div class="mi-meta">${t.category} · ${t.reported}</div>
+        <div class="mi-meta">👷 ${t.worker}</div>
+      </div>`).join('')}
+      ${tasks.length>3?`<div style="font-size:11px;color:var(--muted);text-align:center">+${tasks.length-3} more</div>`:''}
+    </div>`).join('') + `</div>`;
+}
+
+function renderAllMaintTasks() {
+  const el = document.getElementById('all-maint-tasks');
+  if(!el) return;
+  el.innerHTML = MAINTENANCE_TASKS.map(t => {
+    const pc={critical:'#e63946',high:'#f5a623',medium:'#3b82f6',completed:'#00a86b'};
+    const sc={pending:'🔴 Pending','in-progress':'🟡 In Progress',completed:'🟢 Done'};
+    return `<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openMaintModal(${t.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div>
+          <div style="font-weight:700;font-size:14px">${t.title}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${t.category} · ${t.reported}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11px;font-weight:700;color:${pc[t.priority]}">${t.priority.toUpperCase()}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${sc[t.status]}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">👷 ${t.worker}</div>
+    </div>`;
+  }).join('');
+}
+
+function openMaintModal(id) {
+  const t = MAINTENANCE_TASKS.find(x=>x.id===id);
+  if(!t) return;
+  const pc={critical:'#e63946',high:'#f5a623',medium:'#3b82f6'};
+  const sc={pending:'🔴 Pending','in-progress':'🟡 In Progress',completed:'🟢 Completed'};
+  document.getElementById('modal-inner').innerHTML = `
+    <div class="modal-title">🔧 ${t.title}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:12px">
+      <div><strong>Category</strong><br>${t.category}</div>
+      <div><strong>Priority</strong><br><span style="color:${pc[t.priority]||'var(--muted)'}">● ${t.priority.toUpperCase()}</span></div>
+      <div><strong>Status</strong><br>${sc[t.status]||t.status}</div>
+      <div><strong>Reported</strong><br>${t.reported}</div>
+      <div><strong>Assigned To</strong><br>👷 ${t.worker}</div>
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;font-size:13px;margin-bottom:12px">${t.desc}</div>
+    ${t.status!=='completed'?`
+    <button onclick="markTaskDone(${t.id})" style="width:100%;background:var(--accent2);color:#fff;border:none;border-radius:12px;padding:11px;font-size:14px;font-weight:700;margin-top:4px">✅ Mark as Completed</button>
+    <button onclick="closeModal();showAlert('Assigning worker...')" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:11px;font-size:14px;font-weight:700;margin-top:8px">👷 Assign Worker</button>`:''}`;
+  openModal();
+}
+function markTaskDone(id) {
+  const t = MAINTENANCE_TASKS.find(x=>x.id===id);
+  if(t){t.status='completed';}
+  closeModal();
+  showAlert('Task marked as completed! ✅');
+  renderMaintBoard();
+  renderAllMaintTasks();
+}
+
+// ===== AUCTION =====
+function renderLiveAuctions() {
+  const el = document.getElementById('live-auctions');
+  if(!el) return;
+  el.innerHTML = LIVE_AUCTIONS.map(a => {
+    const topBid = a.bids[a.bids.length-1];
+    return `<div class="auction-live-card">
+      <span class="auction-live-badge">🔴 LIVE</span>
+      <div class="auction-fish-name">🐟 ${a.fish}</div>
+      <div class="auction-lot-meta">Lot: ${a.lot} · Qty: ${a.qty} kg · Starting: ₹${a.startPrice}/kg</div>
+      <div class="countdown" id="countdown-${a.id}">--:--</div>
+      <ul class="bid-list">
+        ${a.bids.map((b,i)=>`<li class="bid-row${i===a.bids.length-1?' top-bid':''}">
+          <span>${i===a.bids.length-1?'🏆 ':''} ${b.buyer}</span>
+          <span class="bid-amount">₹${b.amount}/kg</span>
+        </li>`).join('')}
+      </ul>
+      <div style="display:flex;gap:8px">
+        <button onclick="placeBid(${a.id})" style="flex:1;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700">💰 Place Bid</button>
+        <button onclick="closeAuction(${a.id})" style="flex:1;background:var(--accent2);color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700">🔨 Close Auction</button>
+      </div>
+    </div>`;
+  }).join('');
+  startAuctionTimers();
+}
+
+function startAuctionTimers() {
+  stopAuctionTimers();
+  LIVE_AUCTIONS.forEach(a => {
+    let secs = a.timeLeft;
+    const tick = () => {
+      const el = document.getElementById('countdown-'+a.id);
+      if(!el) return;
+      const m = String(Math.floor(secs/60)).padStart(2,'0');
+      const s = String(secs%60).padStart(2,'0');
+      el.textContent = `${m}:${s}`;
+      if(secs>0) { secs--; auctionTimers[a.id] = setTimeout(tick, 1000); }
+      else { el.textContent = '00:00'; el.style.color='var(--muted)'; }
+    };
+    tick();
+  });
+}
+function stopAuctionTimers() {
+  Object.values(auctionTimers).forEach(t => clearTimeout(t));
+  auctionTimers = {};
+}
+function placeBid(id) {
+  const a = LIVE_AUCTIONS.find(x=>x.id===id);
+  if(!a) return;
+  const top = a.bids[a.bids.length-1].amount;
+  const newBid = top + Math.floor(Math.random()*30)+15;
+  a.bids.push({buyer:'You ('+ROLE_CONFIG[currentRole].label+')',amount:newBid});
+  renderLiveAuctions();
+  showAlert(`Bid placed: ₹${newBid}/kg! You are currently leading.`);
+}
+function closeAuction(id) {
+  const a = LIVE_AUCTIONS.find(x=>x.id===id);
+  if(!a) return;
+  const winner = a.bids[a.bids.length-1];
+  showAlert(`Auction closed! Winner: ${winner.buyer} at ₹${winner.amount}/kg`);
+}
+
+function renderAuctLots() {
+  const el = document.getElementById('auct-lots-list');
+  if(!el) return;
+  const statusStyle={live:'background:#ffe4e4;color:#c00',upcoming:'background:#fff3d4;color:#8a5c00',completed:'background:#d4f7e8;color:#00754a'};
+  el.innerHTML = AUCTION_LOTS.map(l => `
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-weight:700;font-size:14px">🐟 ${l.fish}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${l.id} · ${l.qty} kg</div>
+        </div>
+        <span class="order-status" style="${statusStyle[l.status]||''}">${l.status.toUpperCase()}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px">
+        <span>Starting: <strong>₹${l.startPrice}/kg</strong></span>
+        ${l.finalBid?`<span class="up">Final: ₹${l.finalBid}/kg</span>`:''}
+        ${l.winner?`<span style="font-size:11px;color:var(--muted)">🏆 ${l.winner}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function renderAuctHistory() {
+  const el = document.getElementById('auct-history-list');
+  if(!el) return;
+  const completed = AUCTION_LOTS.filter(l=>l.status==='completed');
+  el.innerHTML = completed.map(l=>`
+    <div class="card" style="margin-bottom:10px">
+      <div style="font-weight:700;font-size:14px">${l.id} · 🐟 ${l.fish}</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px">
+        <span>${l.qty} kg</span>
+        <span class="up">₹${l.finalBid}/kg</span>
+        <span style="font-size:11px;color:var(--muted)">🏆 ${l.winner}</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Total: ₹${(l.qty*l.finalBid).toLocaleString()}</div>
+    </div>`).join('');
+}
+
+// ===== ADMIN =====
+function renderAdminAlerts() {
+  ['admin-alerts','admin-all-alerts'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = ADMIN_ALERTS.map(a=>`
+      <div class="alert-item alert-${a.type}" onclick="showAlert('Alert: ${a.title}')">
+        <div class="alert-icon">${a.icon}</div>
+        <div class="alert-body">
+          <div class="alert-title">${a.title}</div>
+          <div class="alert-msg">${a.msg}</div>
+          <div class="alert-time">${a.time}</div>
+        </div>
+      </div>`).join('');
+  });
+}
+
+function broadcastAlert() {
+  const type = document.getElementById('alert-type-sel')?.value;
+  const msg = document.getElementById('alert-msg-input')?.value?.trim();
+  if(!msg){showAlert('Please enter an alert message.');return;}
+  const typeLabels={emergency:'🚨 Emergency',weather:'⚠️ Weather Warning',quality:'🐟 Quality Warning',infra:'🔧 Infrastructure',announce:'📢 Announcement'};
+  ADMIN_ALERTS.unshift({type,icon:typeLabels[type]?.split(' ')[0]||'📢',title:typeLabels[type]||'Alert',msg,time:'Just now'});
+  document.getElementById('alert-msg-input').value='';
+  renderAdminAlerts();
+  showAlert('Alert broadcast to all harbour staff and fishermen! 📢');
+}
+
+function renderAdminAuctionOverview() {
+  const el = document.getElementById('admin-auction-overview');
+  if(!el) return;
+  const live=AUCTION_LOTS.filter(l=>l.status==='live');
+  const upcoming=AUCTION_LOTS.filter(l=>l.status==='upcoming');
+  const completed=AUCTION_LOTS.filter(l=>l.status==='completed');
+  el.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="ki">🔴</div><div class="kv" style="color:#e63946">${live.length}</div><div class="kl">Live</div></div>
+      <div class="kpi-card"><div class="ki">🕐</div><div class="kv">${upcoming.length}</div><div class="kl">Upcoming</div></div>
+      <div class="kpi-card"><div class="ki">✅</div><div class="kv">${completed.length}</div><div class="kl">Completed</div></div>
+      <div class="kpi-card"><div class="ki">💰</div><div class="kv">₹${completed.reduce((s,l)=>s+l.qty*l.finalBid,0).toLocaleString()}</div><div class="kl">Total Revenue</div></div>
+    </div>
+    ${AUCTION_LOTS.map(l=>`<div class="card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-weight:700">${l.id} · ${l.fish}</div><div style="font-size:12px;color:var(--muted)">${l.qty} kg · Starting ₹${l.startPrice}/kg</div></div>
+        <span class="pill">${l.status.toUpperCase()}</span>
+      </div>
+      ${l.finalBid?`<div style="font-size:13px;margin-top:6px" class="up">Final: ₹${l.finalBid}/kg · 🏆 ${l.winner}</div>`:''}
+    </div>`).join('')}`;
+}
+
+// ===== VENDOR =====
+function renderVendFish() {
+  const el = document.getElementById('vend-fish-list');
+  if(!el) return;
+  el.innerHTML = FISH_DATA.map(f => {
+    const wsPrice = Math.round(f.min * 0.88);
+    return `<div class="card" style="display:flex;gap:12px;align-items:center;cursor:pointer" onclick="showAlert('Adding ${f.name} to order...')">
+      <img src="${f.img}" style="width:60px;height:60px;border-radius:10px;object-fit:cover;flex-shrink:0" alt="${f.name}" onerror="this.style.background='var(--surface2)'"/>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">${f.icon} ${f.name}</div>
+        <div style="font-size:12px;color:var(--muted)">${f.origin} · ${f.qty} kg available</div>
+        <div style="font-size:11px;color:var(--muted)">Market: ₹${f.min}–₹${f.max}/kg</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:17px;font-weight:800;color:var(--accent)">₹${wsPrice}/kg</div>
+        <div style="font-size:10px;color:var(--muted)">Wholesale</div>
+        <button onclick="event.stopPropagation();showAlert('Order placed for ${f.name}!')" style="margin-top:4px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700">Buy</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderVendAuctions() {
+  const el = document.getElementById('vend-auctions-list');
+  if(!el) return;
+  el.innerHTML = AUCTION_LOTS.map(l => {
+    const statusStyle={live:'background:#ffe4e4;color:#c00',upcoming:'background:#fff3d4;color:#8a5c00',completed:'background:#d4f7e8;color:#00754a'};
+    const isLive = l.status==='live';
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-weight:700;font-size:14px">🐟 ${l.fish}</div>
+          <div style="font-size:12px;color:var(--muted)">${l.id} · ${l.qty} kg · Starting ₹${l.startPrice}/kg</div>
+        </div>
+        <span class="order-status" style="${statusStyle[l.status]}">${l.status.toUpperCase()}</span>
+      </div>
+      ${isLive?`<button onclick="showAlert('Joining auction for ${l.fish}...')" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;margin-top:10px">💰 Bid Now</button>`:''}
+      ${l.status==='upcoming'?`<button onclick="showAlert('Auction reminder set for ${l.fish}!')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px;font-size:13px;margin-top:10px;color:var(--text)">🔔 Set Reminder</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderVendOrders() {
+  const el = document.getElementById('vend-orders-list');
+  if(!el) return;
+  const cls={delivered:'os-delivered',processing:'os-processing',pending:'os-pending',cancelled:'os-cancelled'};
+  el.innerHTML = VENDOR_ORDERS.map(o=>`
+    <div class="order-card">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">${o.id} · 🐟 ${o.fish}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${o.supplier} · ${o.qty}</div>
+        <div style="font-size:12px;color:var(--muted)">${o.date}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:700;font-size:15px;color:var(--accent)">${o.amount}</div>
+        <span class="order-status ${cls[o.status]}" style="margin-top:4px;display:inline-block">${o.status.toUpperCase()}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderVendCharts() {
+  // Vendor compare chart
+  const vc = document.getElementById('vend-compare-chart');
+  if(vc) {
+    if(vendCompareChart){vendCompareChart.destroy();vendCompareChart=null;}
+    const vf = document.getElementById('vend-compare-filters');
+    if(vf) {
+      vf.innerHTML = Object.keys(COMPARE_DATA.datasets).map(f=>
+        `<div class="filter-chip ${f===selectedVendFilter?'active':''}" onclick="setVendFilter('${f}')">${f}</div>`).join('');
+    }
+    const ds = COMPARE_DATA.datasets[selectedVendFilter];
+    const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+    const textColor = isDark?'#5b9fd4':'#4a7a9b';
+    const gridColor = isDark?'rgba(77,184,255,0.1)':'rgba(0,102,204,0.08)';
+    vendCompareChart = new Chart(vc, {
+      type:'line',
+      data:{labels:COMPARE_DATA.labels,datasets:[
+        {label:'Market Price (₹/kg)',data:ds.past,borderColor:'#0066cc',backgroundColor:'rgba(0,102,204,0.08)',tension:0.4,fill:true,pointRadius:4},
+        {label:'Wholesale Price (₹/kg)',data:ds.past.map(v=>Math.round(v*0.88)),borderColor:'#00a86b',backgroundColor:'rgba(0,168,107,0.06)',tension:0.4,fill:false,pointRadius:3,borderDash:[4,4]},
+      ]},
+      options:{responsive:true,plugins:{legend:{labels:{color:textColor,font:{size:11}}}},scales:{x:{ticks:{color:textColor},grid:{color:gridColor}},y:{ticks:{color:textColor,callback:v=>'₹'+v},grid:{color:gridColor}}}}
+    });
+  }
+  // Harbour chart
+  const vh = document.getElementById('vend-harbour-chart');
+  if(vh) {
+    if(vendHarbourChart){vendHarbourChart.destroy();vendHarbourChart=null;}
+    const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+    const textColor = isDark?'#5b9fd4':'#4a7a9b';
+    const gridColor = isDark?'rgba(77,184,255,0.1)':'rgba(0,102,204,0.08)';
+    const colors=['#0066cc','#00a86b','#f5a623','#e63946'];
+    vendHarbourChart = new Chart(vh, {
+      type:'bar',
+      data:{labels:HARBOUR_PRICE_DATA.labels,datasets:Object.entries(HARBOUR_PRICE_DATA.harbours).map(([name,data],i)=>({label:name,data:data.map(v=>Math.round(v*0.88)),backgroundColor:colors[i]+'bb',borderColor:colors[i],borderWidth:1}))},
+      options:{responsive:true,plugins:{legend:{labels:{color:textColor,font:{size:11}}}},scales:{x:{ticks:{color:textColor},grid:{color:gridColor}},y:{ticks:{color:textColor,callback:v=>'₹'+v},grid:{color:gridColor}}}}
+    });
+  }
+}
+function setVendFilter(f){selectedVendFilter=f;renderVendCharts();}
+
+// ===== NOTIFICATIONS =====
+function renderNotifications() {
+  const unread = NOTIFICATIONS.filter(n=>!n.read).length;
+  const badge = document.getElementById('notif-badge');
+  badge.textContent = unread;
+  badge.style.display = unread>0?'flex':'none';
+  document.getElementById('notif-list').innerHTML = NOTIFICATIONS.map(n=>`
+    <div class="notif-item ${n.read?'':'unread'}" onclick="readNotif(${n.id})">
+      <div class="notif-icon">${n.icon}</div>
+      <div class="notif-body">
+        <div class="notif-sender">${n.sender}</div>
+        <div class="notif-msg">${n.msg}</div>
+        <div class="notif-time">${n.time}</div>
+      </div>
+      ${!n.read?'<div class="notif-unread-dot"></div>':''}
+    </div>`).join('');
+}
+function toggleNotifPanel(){closeAllPanels();document.getElementById('notif-panel').classList.toggle('open');}
+function closeNotifPanel(){document.getElementById('notif-panel').classList.remove('open');}
+function readNotif(id){const n=NOTIFICATIONS.find(x=>x.id===id);if(n)n.read=true;renderNotifications();}
+function markAllRead(){NOTIFICATIONS.forEach(n=>n.read=true);renderNotifications();showAlert('All notifications marked as read ✓');}
+
+// ===== LANGUAGE =====
+function renderLangGrid() {
+  document.getElementById('lang-grid').innerHTML = LANGUAGES.map(l=>
+    `<div class="lang-opt ${currentLang===l.code?'active':''}" onclick="setLang('${l.code}','${l.name}','${l.native}')">${l.native}<br><span style="font-size:10px;opacity:.7">${l.name}</span></div>`).join('');
+}
+function setLang(code,name,native){
+  currentLang=code;
+  document.getElementById('lang-btn').textContent='🌐 '+code.toUpperCase();
+  const cl=document.getElementById('current-lang-label');
+  if(cl) cl.textContent=name;
+  closeLangPanel();
+  showAlert(`Language changed to ${name} (${native})`);
+  renderLangGrid();
+}
+function toggleLangPanel(){closeAllPanels();document.getElementById('lang-panel').classList.toggle('open');}
+function closeLangPanel(){document.getElementById('lang-panel').classList.remove('open');}
+
+// ===== THEME =====
+function toggleTheme(){
+  const html=document.documentElement;
+  const isDark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme',isDark?'light':'dark');
+  updateThemeToggle();
+  document.getElementById('theme-btn').textContent=isDark?'🌙':'☀️';
+  initBgCanvas();
+  if(compareChart||harbourChart){renderCompareChart();renderHarbourChart();}
+  if(vendCompareChart||vendHarbourChart){renderVendCharts();}
+}
+function updateThemeToggle(){
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const tog=document.getElementById('dark-toggle');
+  if(tog)tog.classList.toggle('on',isDark);
+  document.getElementById('theme-btn').textContent=isDark?'☀️':'🌙';
+}
+
+// ===== MENU =====
+function openMenu(){document.getElementById('menu-drawer').classList.add('open');document.getElementById('menu-overlay').classList.add('open');}
+function closeMenu(){document.getElementById('menu-drawer').classList.remove('open');document.getElementById('menu-overlay').classList.remove('open');}
+
+// ===== PANELS =====
+function closeAllPanels(){
+  document.getElementById('notif-panel').classList.remove('open');
+  document.getElementById('lang-panel').classList.remove('open');
+  document.getElementById('role-switcher-panel').classList.remove('open');
+}
+
+// ===== MODALS =====
+function openModal(){document.getElementById('modal-overlay').classList.add('open');}
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modal-overlay'))return;
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+function openFeedbackModal(){document.getElementById('feedback-overlay').classList.add('open');}
+function closeFeedback(e){
+  if(e&&e.target!==document.getElementById('feedback-overlay'))return;
+  document.getElementById('feedback-overlay').classList.remove('open');
+}
+
+// ===== RATING =====
+function setFbRating(n){document.querySelectorAll('#fb-rating span').forEach((s,i)=>s.classList.toggle('sel',i<n));}
+function setBuyerRating(n,el){document.querySelectorAll('#buyer-rate span').forEach((s,i)=>s.classList.toggle('sel',i<n));showAlert(`Rated ${n} star${n>1?'s':''}!`);}
+function setHarbourRating(n,el){document.querySelectorAll('.rating-input span').forEach((s,i)=>s.classList.toggle('sel',i<n));}
+
+// ===== PHOTO UPLOAD =====
+function previewPhotos(input,previewId){
+  const container=document.getElementById(previewId);
+  if(!container)return;
+  Array.from(input.files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=document.createElement('img');
+      img.src=e.target.result;
+      img.onclick=()=>openPhotoViewer(e.target.result);
+      container.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function submitReview(textId,previewId){
+  const text=document.getElementById(textId)?.value?.trim();
+  const preview=document.getElementById(previewId);
+  const photoCount=preview?preview.querySelectorAll('img').length:0;
+  if(!text&&photoCount===0){showAlert('Please write a review or add a photo.');return;}
+  showAlert(photoCount>0?`Review submitted with ${photoCount} photo${photoCount>1?'s':''}! 🙏`:'Review submitted! 🙏');
+  closeModal();
+}
+function openPhotoViewer(src){
+  document.getElementById('modal-inner').innerHTML=`<div style="text-align:center"><img src="${src}" style="width:100%;max-height:340px;object-fit:contain;border-radius:12px"/></div>`;
+  openModal();
+}
+
+// ===== AI =====
+function toggleAI(){document.getElementById('ai-panel').classList.toggle('open');}
+function sendAI(){
+  const input=document.getElementById('ai-input');
+  const msg=input.value.trim();
+  if(!msg)return;
+  appendAIMsg(msg,'user');
+  input.value='';
+  setTimeout(()=>{
+    const key=Object.keys(AI_RESPONSES).find(k=>msg.toLowerCase().includes(k));
+    const resArr=AI_RESPONSES[key]||AI_RESPONSES['default'];
+    appendAIMsg(resArr[Math.floor(Math.random()*resArr.length)],'bot');
+  },600);
+}
+function appendAIMsg(text,type){
+  const msgs=document.getElementById('ai-messages');
+  const div=document.createElement('div');
+  div.className='ai-msg '+type;
+  div.textContent=text;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+// ===== ALERT TOAST =====
+function showAlert(msg){
+  const toast=document.createElement('div');
+  toast.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1f2328;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;max-width:90%;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.4)';
+  toast.textContent=msg;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),2800);
+}
+
+// ===== ANIMATED BACKGROUND =====
+function initBgCanvas(){
+  const canvas=document.getElementById('bg-canvas');
+  const ctx=canvas.getContext('2d');
+  if(bgAnimId)cancelAnimationFrame(bgAnimId);
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const creatures=[];
+  const types=isDark?['🦑','🐙','🪸','🦈','🐠','🫧','🪼']:['🐠','🐟','🦈','🐙','🦀','🐡','🦑','🐬'];
+  const count=isDark?22:18;
+  for(let i=0;i<count;i++){
+    creatures.push({
+      type:types[Math.floor(Math.random()*types.length)],
+      x:Math.random()*canvas.width,y:Math.random()*canvas.height,
+      size:14+Math.random()*22,
+      speedX:(Math.random()-.5)*(isDark?.35:.6),speedY:(Math.random()-.5)*(isDark?.22:.3),
+      opacity:.06+Math.random()*(isDark?.1:.12),
+      glow:isDark&&Math.random()>.5
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(const c of creatures){
+      ctx.save();ctx.globalAlpha=c.opacity;ctx.font=`${c.size}px serif`;
+      if(c.glow){ctx.shadowColor='#4db8ff';ctx.shadowBlur=18;}
+      ctx.fillText(c.type,c.x,c.y);ctx.restore();
+      c.x+=c.speedX;c.y+=c.speedY;
+      if(c.x>canvas.width+30)c.x=-30;if(c.x<-30)c.x=canvas.width+30;
+      if(c.y>canvas.height+30)c.y=-30;if(c.y<-30)c.y=canvas.height+30;
+    }
+    bgAnimId=requestAnimationFrame(draw);
+  }
+  draw();
+}
+window.addEventListener('resize',()=>{const c=document.getElementById('bg-canvas');c.width=window.innerWidth;c.height=window.innerHeight;initBgCanvas();});
+
+// Close panels on outside click
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#lang-panel')&&!e.target.closest('#lang-btn'))closeLangPanel();
+  if(!e.target.closest('#notif-panel')&&!e.target.closest('.notif-btn-wrap'))closeNotifPanel();
+  if(!e.target.closest('#role-switcher-panel')&&!e.target.closest('#role-pill'))document.getElementById('role-switcher-panel').classList.remove('open');
+});
+</script>
+</body>
+</html>
